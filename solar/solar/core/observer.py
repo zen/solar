@@ -74,6 +74,8 @@ class BaseObserver(object):
 
         receiver.notify(self)
 
+    __rshift__ = subscribe
+
     def subscribed(self, emitter):
         self.log('Subscribed {}'.format(emitter))
 
