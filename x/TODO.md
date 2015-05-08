@@ -1,5 +1,6 @@
 # TODO
 
+- grammar connections fuzzy matching algorithm (for example: type 'login' joins to type 'login' irrespective of names of both inputs)
 - store all resource configurations somewhere globally (this is required to
   correctly perform an update on one resource and bubble down to all others)
 - config templates
