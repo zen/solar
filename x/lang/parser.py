@@ -4,7 +4,7 @@ import pypeg2
 import re
 
 
-"""
+HAPROXY_DEPLOYMENT = """
 node1 := ro_node ip=10.0.0.3
 node2 := ro_node ip=10.0.0.4
 node3 := ro_node ip=10.0.0.5
@@ -13,22 +13,44 @@ mariadb_service1 := mariadb_service image=mariadb root_password=mariadb port=330
 keystone_db := mariadb_db db_name=keystone_db
 keystone_db_user := mariadb_user new_user_name=keystone new_user_password=keystone
 
+keystone_config1 := keystone_config config_dir=/etc/solar/keystone admin_token=admin
+keystone_service1 := keystone_service port=5000 admin_port=35357
+
+keystone_config2 := keystone_config config_dir=/etc/solar/keystone admin_token=admin
+keystone_service2 := keystone_service port=5000 admin_port=35357
+
+haproxy_keystone_config := haproxy_config name=keystone_config listen_port=5000
+haproxy_config := haproxy
+haproxy_service := docker_container image=tutum/haproxy
+"""
+
+"""
 # 2 types of connections:
 #   [A::B] -- overwrite whole mapping
 #   {A::B} -- update default mapping with given definition(s)
-node1 -> mariadb_service1 -{root_password::login_password port::login_port}-> keystone_db
-node1 -> keystone_db -> keystone_db_user
+node1 -> mariadb_service1 -{root_password::login_password port::login_port}-> keystone_db -> keystone_db_user
 
+node1 -> keystone_config1 -> keystone_service1 -[ip::servers port::ports]-> haproxy_keystone_config
+mariadb_service1 -[ip::db_host]-> keystone_config1 -[config_dir::config_dir] -> keystone_service1
+keystone_db_user -[db_name::db_name new_user_name::db_user new_user_password::db_password]-> keystone_config1
+
+node1 -> keystone_config2 -> keystone_service2 -[ip::servers port::ports]->haproxy_keystone_config
+mariadb_service1 -[ip::db_host]-> keystone_config2 -[config_dir::config_dir] -> keystone_service2
+keystone_db_user -[db_name::db_name new_user_name::db_user new_user_password::db_password]-> keystone_config2
+
+node1 -> haproxy_config -> haproxy_service
+haproxy_keystone_config -[listen_port::listen_ports name::configs_names ports::configs_ports servers::configs]-> haproxy_config
+haproxy_config -[listen_ports::ports config_dir::host_binds]-> haproxy_service
 
 # resources
-r1 = Resource(<name>, <template-path>, <destination-path>, <args>)
-r2 = Resource(<name>, <template-path>, <destination-path>, <args>)
+#r1 = Resource(<name>, <template-path>, <destination-path>, <args>)
+#r2 = Resource(<name>, <template-path>, <destination-path>, <args>)
 
 # connections
-r1.ip -> r2.servers
+#r1.ip -> r2.servers
 
 # actions
-r1:run >> r2:run
+#r1:run >> r2:run
 """
 
 
@@ -201,8 +223,8 @@ def print_parsed(c):
 def create_definitions(parsed):
     if isinstance(parsed, ResourceDefinitionExpression):
         args = None
-        if len(parsed[1]) == 2:
-            args = dict(parsed[1][1])
+        if len(parsed[1]) >= 2:
+            args = dict(parsed[1][1:])
 
         return ResourceDefinition(
             parsed[0], parsed[1][0], args=args
@@ -230,15 +252,22 @@ if __name__ == '__main__':
     SAMPLES = """
 # resources
 node1 := ro_node ip=10.0.0.3 ssh_key=key
+
 # connections
 r1 -> r2 -> r3
 node1 -> mariadb_service1 -{root_password::login_password port::login_port}-> keystone_db -> keystone_db_user
 node1 -[ip::ip]-> keystone_db -> keystone_db_user
+
 # actions
 r1:run >> (r2:run | r3:run)
 """
 
     c = pypeg2.parse(SAMPLES, Expression)
+    c = unwrap_expressions(c)
+    for parsed in c:
+        print(create_definitions(parsed))
+
+    c = pypeg2.parse(HAPROXY_DEPLOYMENT, Expression)
     c = unwrap_expressions(c)
     for parsed in c:
         print(create_definitions(parsed))
