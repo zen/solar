@@ -155,7 +155,7 @@ def deploy():
     signals.connect(glance_db_user, glance_api_container, {'new_user_password': 'db_password'})
     signals.connect(glance_keystone_user, glance_api_container, {'user_password': 'keystone_password'})
     signals.connect(glance_keystone_user, glance_api_container, {'admin_token': 'keystone_admin_token'})
-    signals.connect(haproxy_config, glance_api_container, {'ip': 'keystone_host'})
+    signals.connect(haproxy_config, glance_api_container, {'ip': 'keystone_host'}, False)
 
     signals.connect(node2, glance_registry_container)
     signals.connect(glance_config, glance_registry_container, {'config_dir': 'host_binds'})
@@ -168,17 +168,17 @@ def deploy():
     signals.connect(haproxy_config, glance_registry_container, {'ip': 'keystone_host'})
 
     # glance haproxy
-    signals.connect(glance_api_container, haproxy_glance_api_config, {'ip': 'servers'})
+    signals.connect(glance_api_container, haproxy_glance_api_config, {'ip': 'servers'}, False)
     #signals.connect(glance_config, haproxy_glance_api_config, {'api_port': 'ports'})
     signals.connect(haproxy_glance_api_config, haproxy_config, {'listen_port': 'listen_ports', 'name': 'configs_names', 'ports': 'configs_ports', 'servers': 'configs'})
 
     # glance keystone endpoint
     #signals.connect(glance_api_container, glance_api_endpoint, {'ip': 'ip', 'ssh_user': 'ssh_user', 'ssh_key': 'ssh_key'})
     signals.connect(haproxy_service, glance_api_endpoint, {'ip': 'ip', 'ssh_user': 'ssh_user', 'ssh_key': 'ssh_key'})
-    signals.connect(keystone_config1, glance_api_endpoint, {'admin_token': 'admin_token'})
-    signals.connect(keystone_service1, glance_api_endpoint, {'ip': 'keystone_host', 'admin_port': 'keystone_port'})
-    signals.connect(haproxy_glance_api_config, glance_api_endpoint, {'listen_port': 'admin_port'})
-    signals.connect(haproxy_glance_api_config, glance_api_endpoint, {'listen_port': 'port'})
+    signals.connect(keystone_config1, glance_api_endpoint, {'admin_token': 'admin_token'}, False)
+    signals.connect(keystone_service1, glance_api_endpoint, {'ip': 'keystone_host', 'admin_port': 'keystone_port'}, False)
+    signals.connect(haproxy_glance_api_config, glance_api_endpoint, {'listen_port': 'admin_port'}, False)
+    signals.connect(haproxy_glance_api_config, glance_api_endpoint, {'listen_port': 'port'}, False)
 
 
     has_errors = False
@@ -196,6 +196,7 @@ def deploy():
         sys.exit(1)
 
 
+    return
     # run
     actions.resource_action(mariadb_service1, 'run')
     actions.resource_action(rabbitmq_service1, 'run')

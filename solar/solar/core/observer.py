@@ -29,7 +29,7 @@ class BaseObserver(object):
     def receivers(self):
         from solar.core import resource
 
-        for receiver_name, receiver_input in signals.Connections.receivers(
+        for receiver_name, receiver_input, _ in signals.Connections.receivers(
                     self._attached_to_name,
                     self.name
                 ):
@@ -68,7 +68,7 @@ class BaseObserver(object):
         if fltr:
             return fltr[0]
 
-    def subscribe(self, receiver):
+    def subscribe(self, receiver, wait_for_emitter):
         """
         :param receiver: Observer
         :return:
@@ -84,7 +84,8 @@ class BaseObserver(object):
             self.attached_to,
             self.name,
             receiver.attached_to,
-            receiver.name
+            receiver.name,
+            wait_for_emitter=wait_for_emitter
         )
 
         receiver.notify(self)

@@ -52,7 +52,7 @@ class Connections(object):
         db.save_list(data, collection=db.COLLECTIONS.connection)
 
     @staticmethod
-    def add(emitter, src, receiver, dst):
+    def add(emitter, src, receiver, dst, wait_for_emitter):
         if src not in emitter.args:
             return
 
@@ -65,7 +65,7 @@ class Connections(object):
         clients.setdefault(emitter.name, {})
         clients[emitter.name].setdefault(src, [])
         if [receiver.name, dst] not in clients[emitter.name][src]:
-            clients[emitter.name][src].append([receiver.name, dst])
+            clients[emitter.name][src].append([receiver.name, dst, wait_for_emitter])
 
         Connections.save_clients(clients)
 
@@ -124,7 +124,7 @@ def guess_mapping(emitter, receiver):
     return guessed
 
 
-def connect(emitter, receiver, mapping=None):
+def connect(emitter, receiver, mapping=None, wait_for_emitter=True):
     mapping = mapping or guess_mapping(emitter, receiver)
 
     for src, dst in mapping.items():
@@ -133,7 +133,7 @@ def connect(emitter, receiver, mapping=None):
         if receiver.args[dst].type_ != 'list':
             disconnect_receiver_by_input(receiver, dst)
 
-        emitter.args[src].subscribe(receiver.args[dst])
+        emitter.args[src].subscribe(receiver.args[dst], wait_for_emitter)
 
     #receiver.save()
 
@@ -244,9 +244,10 @@ def detailed_connection_graph(start_with=None, end_with=None):
 
     for emitter_name, destination_values in clients.items():
         for emitter_input, receivers in destination_values.items():
-            for receiver_name, receiver_input in receivers:
-                label = '{}:{}'.format(emitter_input, receiver_input)
-                g.add_edge(emitter_name, receiver_name, label=label)
+            for receiver_name, receiver_input, wait_for_emitter in receivers:
+                if wait_for_emitter:
+                    label = '{}:{}'.format(emitter_input, receiver_input)
+                    g.add_edge(emitter_name, receiver_name, label=label)
 
     ret = g
 
