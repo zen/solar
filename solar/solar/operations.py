@@ -78,7 +78,6 @@ def _stage_changes(staged_resources, conn_graph,
         df = create_diff(staged_data, commited_data)
 
         if df:
-
             log_item = state.LogItem(
                 utils.generate_uuid(),
                 res_uid,
