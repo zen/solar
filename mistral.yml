@@ -5,7 +5,7 @@
     mistral_conf: /etc/mistral.conf
     rabbitmq_host: 10.0.0.2
   tasks:
-    - shell: apt-get install -y python-dev python-setuptools libffi-dev libxslt1-dev libxml2-dev libyaml-dev libssl-dev crudini
+    - shell: apt-get install -y python-dev python-setuptools libffi-dev libxslt1-dev libxml2-dev libyaml-dev libssl-dev crudini git
     - shell: cd /srv/mistral/ && git branch
       ignore_errors: true
       register: check_mistral
@@ -14,29 +14,46 @@
            version=stable/kilo
       when: check_mistral | failed
     - shell: cp /srv/mistral/etc/mistral.conf.sample {{mistral_conf}}
+      tags: [conf]
     - shell: crudini --set /etc/mistral.conf pecan auth_enable false
+      tags: [conf]
     - shell: hostname
       register: hostname
+      tags: [conf]
     - shell: crudini --set {{mistral_conf}} {{item}} hostname {{hostname.stdout}}
       with_items:
         - engine
         - executor
+      tags: [conf]
+    - shell: crudini --set {{mistral_conf}} {{item}} host {{hostname.stdout}}
+      with_items:
+        - engine
+        - executor
+      tags: [conf]
     - shell: crudini --set {{mistral_conf}} oslo_messaging_rabbit rabbitmq_host
         {{rabbitmq_host}}
-    - shell: python setup.py install
+      tags: [conf]
+    - shell: crudini --set {{mistral_conf}} oslo_messaging_rabbit rabbit_hosts {{rabbitmq_host}}:5672
+      tags: [conf]
+    - shell: pip install -r requirements.txt
              chdir=/srv/mistral
+    - shell: python setup.py develop --no-deps
+             chdir=/srv/mistral
+    - shell: python setup.py develop
+             chdir=/vagrant/mistral_actions
+
 - hosts: [master]
   sudo: yes
   vars:
     mistral_conf: /etc/mistral.conf
   tasks:
-    - shell: python tools/sync_db.py --config-file {{mistral_conf}}
+    - shell: python tools/sync_db.py --config-file /etc/mistral.conf
              chdir=/srv/mistral
     - shell: pip install python-mistralclient
     - shell: pgrep mistral-server
       ignore_errors: true
       register: mistral
-    - shell: nohup mistral-server --server api,engine,executor --config-file {{mistral_conf}} &
+    - shell: nohup mistral-server --server api,engine --config-file /etc/mistral.conf &
       tags:
         - run
       when: mistral | failed
@@ -49,7 +66,7 @@
     - shell: pgrep mistral-server
       ignore_errors: true
       register: mistral
-    - shell: nohup mistral-server --server executor --config-file {{mistral_conf}} &
+    - shell: nohup mistral-server --server executor --config-file /etc/mistral.conf &
       tags:
         - run
       when: mistral | failed

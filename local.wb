@@ -1,0 +1,48 @@
+version: '2.0'
+
+name: my_workbook
+description: This is a test workbook
+tags: [test, v2]
+
+workflows:
+
+  wf:
+    tags: [test, v2]
+    type: reverse
+
+    tasks:
+
+      k1:
+        target: solar-dev
+        with-items: item in ["k1-1", "k1-2"]
+        action: solar.cmd cmd="echo <% $.item %>"
+
+      k2:
+        target: solar-dev1
+        action: solar.cmd cmd="sleep 10"
+
+      h1:
+        target: solar-dev1
+        action: solar.cmd cmd="sleep 10"
+        requires: [k1, k2]
+
+      g1:
+        target: solar-dev
+        action: solar.cmd cmd="sleep 10"
+        requires: [h1]
+
+  sub:
+    type: reverse
+    tasks:
+
+        t1:
+            target: solar-dev
+            action: solar.cmd cmd="echo 10"
+
+        t2:
+            target: solar-dev1
+            action: solar.cmd cmd="echo 12"
+
+        t3:
+            requires: [t1, t2]
+            description: "noop"

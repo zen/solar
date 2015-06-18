@@ -1,0 +1,22 @@
+1. No way to limit number of tasks running in paralle (e.g. chunks),
+will be solved with concurrency policy (currently in progress)
+
+2. No fault tolerance support, maybe also can be solved with policy for workflow (TBD with Renat)
+
+3. No way to report progress in reverse type of workflow (e.g resolving by requires),
+in direct type there is a way to specify *on-error*, *on-success* handlers.
+
+
+Bugs
+----------------
+1. Need to *sync-db* after installing additional drivers
+2. If task will fail with unxpected error -> whole workflow will be stuck in running
+
+
+Good
+-------
+1. Independent tasks running parallel
+2. Cross-orchestration between nodes is not an issue
+3. Publish result of a task as an input to another task
+4. Plugable drivers for a tasks
+5. Suppor for timeout

@@ -2,6 +2,10 @@
 *.egg-info
 .venv
 *.pyc
+build/
+dist/
+
+*.sqlite
 
 # vagrant
 .vagrant
