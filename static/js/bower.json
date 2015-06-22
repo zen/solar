@@ -1,0 +1,24 @@
+{
+  "name": "graph",
+  "version": "0.0.0",
+  "homepage": "https://github.com/xarses/fuel-ng",
+  "authors": [
+    "Przemyslaw Kaminski <pkaminski@mirantis.com>"
+  ],
+  "moduleType": [
+    "amd"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "cytoscape-edgehandles": "~2.0.0",
+    "cytoscape": "~2.4.2",
+    "jquery": "~2.1.4"
+  }
+}
