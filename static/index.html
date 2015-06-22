@@ -1,21 +1,26 @@
 <html>
 <head>
-    <script type="text/javascript" src="js/bower_components/cytoscape/dist/cytoscape.js"></script>
+    <style>
+        body {
+            font: 14px helvetica neue, helvetica, arial, sans-serif;
+        }
+
+        #cy {
+            height: 100%;
+            width: 100%;
+            background-color: #FAEDEF;
+        }
+    </style>
+
+    <script type="text/javascript" src="/js/bower_components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bower_components/cytoscape/dist/cytoscape.js"></script>
+    <script type="text/javascript" src="/js/bower_components/cytoscape-edgehandles/cytoscape-edgehandles.js"></script>
+    <script type="text/javascript" src="/js/bower_components/cytoscape/lib/foograph.js"></script>
+    <script type="text/javascript" src="/js/bower_components/cytoscape/lib/rhill-voronoi-core.js"></script>
+    <script type="text/javascript" src="/js/graph.js"></script>
 </head>
 <body>
     <h1>Connections Graph</h1>
     <div id="cy"></div>
-
-    <script type="text/javascript">
-        var cy = cytoscape({
-            container: document.getElementById('cy'),
-            ready: function() { console.log('ready'); },
-            elements:[
-                {group: 'nodes', data: {id: 'n0'}},
-                {group: 'nodes', data: {id: 'n1'}},
-                {group: 'edges', data: {id: 'e0', source: 'n0', target: 'n1'}}
-            ]
-        });
-    </script>
 </body>
 </html>

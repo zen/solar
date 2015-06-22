@@ -191,6 +191,54 @@ def init_cli_connections():
         pass
 
     @connections.command()
+    def dump_json():
+        """Dumps JSON to static directory for use in the UI viewer.
+        """
+        g = signals.connection_graph()
+        ret = {
+            'nodes': g.nodes(),
+            # 'edges': [
+            #     {
+            #         'source': e[0],
+            #         'target': e[1],
+            #         'label': v['label']
+            #     } for e in g.edges()
+            #     for v in g.get_edge_data(*e).values()
+            # ]
+            'edges': [
+                {
+                    'source': e[0],
+                    'target': e[1],
+                    'label': i
+                } for i, e in enumerate(g.edges())
+            ]
+        }
+
+        with open('/vagrant/static/connections.json', 'w') as f:
+            f.write(json.dumps(ret))
+
+
+    # TODO: this requires graphing libraries
+    @connections.command()
+    @click.option('--start-with', default=None)
+    @click.option('--end-with', default=None)
+    def graph(end_with, start_with):
+        #g = xs.connection_graph()
+        g = signals.detailed_connection_graph(start_with=start_with,
+                                              end_with=end_with)
+
+        nx.write_dot(g, 'graph.dot')
+        subprocess.call(['dot', '-Tpng', 'graph.dot', '-o', 'graph.png'])
+
+        # Matplotlib
+        #pos = nx.spring_layout(g)
+        #nx.draw_networkx_nodes(g, pos)
+        #nx.draw_networkx_edges(g, pos, arrows=True)
+        #nx.draw_networkx_labels(g, pos)
+        #plt.axis('off')
+        #plt.savefig('graph.png')
+
+    @connections.command()
     def show():
         def format_resource_input(resource_name, resource_input_name):
             return '{}::{}'.format(
@@ -219,26 +267,6 @@ def init_cli_connections():
         keys = sorted(clients)
         for emitter_name in keys:
             show_emitter_connections(emitter_name, clients[emitter_name])
-
-    # TODO: this requires graphing libraries
-    @connections.command()
-    @click.option('--start-with', default=None)
-    @click.option('--end-with', default=None)
-    def graph(end_with, start_with):
-        #g = xs.connection_graph()
-        g = signals.detailed_connection_graph(start_with=start_with,
-                                              end_with=end_with)
-
-        nx.write_dot(g, 'graph.dot')
-        subprocess.call(['dot', '-Tpng', 'graph.dot', '-o', 'graph.png'])
-
-        # Matplotlib
-        #pos = nx.spring_layout(g)
-        #nx.draw_networkx_nodes(g, pos)
-        #nx.draw_networkx_edges(g, pos, arrows=True)
-        #nx.draw_networkx_labels(g, pos)
-        #plt.axis('off')
-        #plt.savefig('graph.png')
 
 
 def init_cli_deployment_config():

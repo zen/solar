@@ -1,0 +1,12 @@
+---
+
+- hosts: all
+  sudo: yes
+  tasks:
+    - apt: name=nginx state=present
+
+    - template: src=/vagrant/nginx.conf dest=/etc/nginx/nginx.conf owner=root mode=0644
+    - template: src=/vagrant/nginx-site-config dest=/etc/nginx/sites-available/default owner=root mode=0644
+    - file: src=/etc/nginx/sites-available/default dest=/etc/nginx/sites-enabled/default state=link
+
+    - service: name=nginx state=reloaded

@@ -12,6 +12,10 @@ pip install ansible
 ansible-playbook -i "localhost," -c local /vagrant/main.yml /vagrant/docker.yml
 SCRIPT
 
+master_script = <<SCRIPT
+ansible-playbook -i "localhost," -c local /vagrant/master.yml
+SCRIPT
+
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   #config.vm.box = "deb/jessie-amd64"
@@ -19,9 +23,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.define "solar-dev", primary: true do |config|
     config.vm.provision "shell", inline: init_script, privileged: true
+    config.vm.provision "shell", inline: master_script, privileged: true
     config.vm.provision "file", source: "~/.vagrant.d/insecure_private_key", destination: "/vagrant/tmp/keys/ssh_private"
     config.vm.provision "file", source: "ansible.cfg", destination: "/home/vagrant/.ansible.cfg"
     config.vm.network "private_network", ip: "10.0.0.2"
+    config.vm.network "forwarded_port", guest: 80, host: 8080
     config.vm.host_name = "solar-dev"
 
     config.vm.provider :virtualbox do |v|

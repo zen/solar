@@ -17,3 +17,7 @@ rs/
 
 solar.log
 x-venv/
+
+static/js/bower_components
+
+.idea
