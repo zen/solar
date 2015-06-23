@@ -195,15 +195,21 @@ def init_cli_connections():
         """Dumps JSON to static directory for use in the UI viewer.
         """
         g = signals.detailed_connection_graph()
+
+        edges = set([
+            (e[0], e[1], v['label'])
+            for e in g.edges()
+            for v in g.get_edge_data(*e).values()
+        ])
+
         ret = {
             'nodes': [{'id': node} for node in g.nodes()],
             'edges': [
                 {
                     'source': e[0],
                     'target': e[1],
-                    'label': v['label']
-                } for e in g.edges()
-                  for v in g.get_edge_data(*e).values()
+                    'label': e[2]
+                } for e in edges
             ]
             # 'edges': [
             #     {

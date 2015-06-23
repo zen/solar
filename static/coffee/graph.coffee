@@ -19,8 +19,10 @@ $ () ->
     }
 
     cy.batch () ->
-      cy.add {group: 'nodes', data: node.data} for node in connections_simplified.nodes
+      cy.add {group: 'nodes', data: node.data, position: {x: 10, y: 10}} for node in connections_simplified.nodes
       cy.add {group: 'edges', data: edge.data} for edge in connections_simplified.edges
+
+    cy.layout()
 
   cy.on 'tap', (ev) ->
     el = ev.cyTarget
@@ -73,9 +75,9 @@ init_main_graph = () ->
     #content: 'data(label)'
     }),
     ready: () -> console.log('ready'),
-  #layout: {name: 'breadthfirst', fit: true},
-  #layout: {name: 'concentric', levelWidth: ((node) -> 1)},
-  #layout: {name: 'cose', animate: false, idealEdgeLength: 50},
+    #layout: {name: 'breadthfirst', fit: true},
+    #layout: {name: 'concentric', levelWidth: ((node) -> 1)},
+    #layout: {name: 'cose', animate: false, idealEdgeLength: 50},
     layout: {name: 'spread', maxExpandIterations: 10}
   }
   cy.edgehandles()

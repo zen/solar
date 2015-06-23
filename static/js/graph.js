@@ -30,14 +30,18 @@
           return results;
         })()
       };
-      return cy.batch(function() {
+      cy.batch(function() {
         var edge, j, l, len1, len2, node, ref1, ref2, results;
         ref1 = connections_simplified.nodes;
         for (j = 0, len1 = ref1.length; j < len1; j++) {
           node = ref1[j];
           cy.add({
             group: 'nodes',
-            data: node.data
+            data: node.data,
+            position: {
+              x: 10,
+              y: 10
+            }
           });
         }
         ref2 = connections_simplified.edges;
@@ -51,6 +55,7 @@
         }
         return results;
       });
+      return cy.layout();
     });
     return cy.on('tap', function(ev) {
       var el, node_formatter, nodes;
