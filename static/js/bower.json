@@ -19,6 +19,7 @@
   "dependencies": {
     "cytoscape-edgehandles": "~2.0.0",
     "cytoscape": "~2.4.2",
-    "jquery": "~2.1.4"
+    "jquery": "~2.1.4",
+    "cytoscape-cxtmenu": "~2.1.5"
   }
 }

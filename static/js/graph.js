@@ -60,7 +60,7 @@
     return cy.on('tap', function(ev) {
       var el, node_formatter, nodes;
       el = ev.cyTarget;
-      if (!(el.length || (typeof el.isEdge === "function" ? el.isEdge() : void 0))) {
+      if (!(el.length || !(typeof el.isEdge === "function" ? el.isEdge() : void 0))) {
         return;
       }
       nodes = el.connectedNodes();
@@ -204,6 +204,16 @@
       return el.css({
         'line-color': edge_line_color
       });
+    });
+    cy.cxtmenu({
+      commands: [
+        {
+          content: 'remove',
+          select: function() {
+            return console.log(this.remove());
+          }
+        }
+      ]
     });
     return cy;
   };

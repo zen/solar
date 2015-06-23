@@ -27,7 +27,7 @@ $ () ->
   cy.on 'tap', (ev) ->
     el = ev.cyTarget
 
-    return unless (el.length || el.isEdge?())
+    return unless (el.length || !el.isEdge?())
 
     nodes = el.connectedNodes()
     node_formatter = (node, left) -> {group: 'nodes', data: {id: node.id()}, position: {x: left, y: 125}}
@@ -106,6 +106,15 @@ init_main_graph = () ->
     el = ev.cyTarget
     return unless (el.length || el.isNode?())
     el.css({'line-color': edge_line_color})
+
+  cy.cxtmenu({
+    commands: [
+      {
+        content: 'remove',
+        select: () -> console.log this.remove()
+      }
+    ]
+  })
 
   cy
 
