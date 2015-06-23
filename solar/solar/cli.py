@@ -194,24 +194,24 @@ def init_cli_connections():
     def dump_json():
         """Dumps JSON to static directory for use in the UI viewer.
         """
-        g = signals.connection_graph()
+        g = signals.detailed_connection_graph()
         ret = {
-            'nodes': g.nodes(),
-            # 'edges': [
-            #     {
-            #         'source': e[0],
-            #         'target': e[1],
-            #         'label': v['label']
-            #     } for e in g.edges()
-            #     for v in g.get_edge_data(*e).values()
-            # ]
+            'nodes': [{'id': node} for node in g.nodes()],
             'edges': [
                 {
                     'source': e[0],
                     'target': e[1],
-                    'label': i
-                } for i, e in enumerate(g.edges())
+                    'label': v['label']
+                } for e in g.edges()
+                  for v in g.get_edge_data(*e).values()
             ]
+            # 'edges': [
+            #     {
+            #         'source': e[0],
+            #         'target': e[1],
+            #         'label': i
+            #     } for i, e in enumerate(g.edges())
+            # ]
         }
 
         with open('/vagrant/static/connections.json', 'w') as f:
