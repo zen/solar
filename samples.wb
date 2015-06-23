@@ -1,0 +1,86 @@
+version: '2.0'
+
+name: samples
+description: This is a test workbook
+tags: [test, v2]
+
+workflows:
+
+  rabbit:
+    type: direct
+
+    tasks:
+
+      r1:
+        target: solar-dev
+        action: solar.cmd cmd="echo create rabbit cluster r1"
+        on-success:
+            - r2
+            - r3
+        on-complete:
+            - rabbit_cluster
+            - report
+
+      r2:
+        target: solar-dev1
+        action: solar.cmd cmd="echo connect to rabbit cluster r2"
+        on-complete:
+            - rabbit_cluster
+            - report
+
+      r3:
+        target: solar-dev1
+        action: solar.cmd cmd="echo connect to rabbit cluster r3"
+        on-complete:
+            - rabbit_cluster
+            - report
+
+      rabbit_cluster:
+        join: all
+        timeout: 60
+        description: "anchor"
+
+      report:
+        target: solar-dev
+        action: solar.cmd cmd="echo <% $ %> >> /tmp/results"
+
+  reboot:
+      type: direct
+      tasks:
+          reb:
+            target: solar-dev1
+            timeout: 5
+            action: solar.cmd cmd="reboot"
+            on-complete:
+                - wait_reboot
+
+          wait_reboot:
+            target: solar-dev
+            action: solar.cmd cmd="ping -c 3 10.0.0.3"
+            retry: count=10 delay=2
+
+  test_timeout:
+    type: direct
+    tasks:
+        test:
+            target: solar-dev1
+            timeout: 5
+            action: solar.cmd cmd="yes"
+
+
+  one_by_one:
+    type: direct
+    tasks:
+        first:
+            action: solar.cmd cmd="sleep 10"
+            on-complete:
+                - second
+
+        second:
+            action: solar.cmd cmd="sleep 10"
+            pause-before: true
+            on-complete:
+                - third
+
+        third:
+            action: solar.cmd cmd="sleep 10"

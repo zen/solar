@@ -1,22 +1,28 @@
-1. No way to limit number of tasks running in paralle (e.g. chunks),
+1. No way to limit number of tasks running in parallel (e.g. chunks),
 will be solved with concurrency policy (currently in progress)
+https://github.com/openstack/mistral/blob/master/mistral/engine/policies.py#L381
 
 2. No fault tolerance support, maybe also can be solved with policy for workflow (TBD with Renat)
+  - ignore_errors for some task
+  - % success
 
-3. No way to report progress in reverse type of workflow (e.g resolving by requires),
-in direct type there is a way to specify *on-error*, *on-success* handlers.
+3. No way to report progress in reverse type of workflow (e.g resolving by requires).
+
+In direct progress can be reported by on-error, on-success, on-complete hooks
 
 
 Bugs
 ----------------
 1. Need to *sync-db* after installing additional drivers
 2. If task will fail with unxpected error -> whole workflow will be stuck in running
-
+3. Timeout is broken - on timeout engine failed with (OperationalError) database is locked
+4. ^^ task that is timed out will run forever
+5. Resuming workflow resulted in OperationalError: (OperationalError) database is locked None None\n
 
 Good
--------
+----------------
 1. Independent tasks running parallel
 2. Cross-orchestration between nodes is not an issue
 3. Publish result of a task as an input to another task
-4. Plugable drivers for a tasks
-5. Suppor for timeout
+4. Plugable drivers for tasks
+5. Retry policy support
