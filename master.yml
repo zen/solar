@@ -10,3 +10,9 @@
     - file: src=/etc/nginx/sites-available/default dest=/etc/nginx/sites-enabled/default state=link
 
     - service: name=nginx state=reloaded
+
+    - apt: name=npm state=present
+    - apt: name=nodejs state=present
+    - file: src=/usr/bin/nodejs dest=/usr/bin/node state=link
+    - shell: npm install -g bower
+    - shell: su - vagrant -c bower install chdir=/vagrant/static/js
