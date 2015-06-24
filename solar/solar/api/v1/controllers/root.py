@@ -2,7 +2,30 @@ from pecan import expose, redirect
 from pecan.rest import RestController
 
 
-class ConnectionsGraphController(RestController):
+class BaseRestController(RestController):
+    @expose(template='json')
+    def options(self):
+        return {
+            'handlers': list(self._inspect_handlers()),
+        }
+
+    def _inspect_handlers(self, base_path=[]):
+        for k, v in self.__class__.__dict__.items():
+            if isinstance(v, BaseRestController):
+                for h in v._inspect_handlers(base_path=base_path + [k]):
+                    yield h
+
+        yield {
+            'methods': [
+                method
+                for method in ['get', 'post', 'put', 'delete', 'options']
+                if hasattr(self.__class__, method)
+            ],
+            'path': '/{}'.format('/'.join(base_path)),
+        }
+
+
+class ConnectionsGraphController(BaseRestController):
     @expose(template='json')
     def get(self):
         """Dumps JSON to static directory for use in the UI viewer.
@@ -23,15 +46,15 @@ class ConnectionsGraphController(RestController):
                 {
                     'source': e[0],
                     'target': e[1],
-                    'label': e[2]
+                    'label': e[2],
                 } for e in edges
             ]
         }
 
 
-class ConnectionsController(RestController):
+class ConnectionsController(BaseRestController):
     graph = ConnectionsGraphController()
 
 
-class RootController(RestController):
+class RootController(BaseRestController):
     connections = ConnectionsController()
