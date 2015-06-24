@@ -211,13 +211,6 @@ def init_cli_connections():
                     'label': e[2]
                 } for e in edges
             ]
-            # 'edges': [
-            #     {
-            #         'source': e[0],
-            #         'target': e[1],
-            #         'label': i
-            #     } for i, e in enumerate(g.edges())
-            # ]
         }
 
         with open('/vagrant/static/connections.json', 'w') as f:

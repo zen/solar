@@ -44,7 +44,8 @@ $ () ->
 
 load_connections = () ->
   connections = $.Deferred()
-  connections_get = $.get '/connections.json',
+  #connections_get = $.get '/connections.json',
+  connections_get = $.get '/connections/graph',
     ((data) ->
       console.log 'data', data
       ret ={

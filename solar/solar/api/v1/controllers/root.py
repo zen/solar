@@ -1,30 +1,37 @@
 from pecan import expose, redirect
 from pecan.rest import RestController
 
-from webob.exc import status_map
+
+class ConnectionsGraphController(RestController):
+    @expose(template='json')
+    def get(self):
+        """Dumps JSON to static directory for use in the UI viewer.
+        """
+        from solar.core import signals
+
+        g = signals.detailed_connection_graph()
+
+        edges = set([
+            (e[0], e[1], v['label'])
+            for e in g.edges()
+            for v in g.get_edge_data(*e).values()
+        ])
+
+        return {
+            'nodes': [{'id': node} for node in g.nodes()],
+            'edges': [
+                {
+                    'source': e[0],
+                    'target': e[1],
+                    'label': e[2]
+                } for e in edges
+            ]
+        }
 
 
-class RootControllerOld(object):
-
-    @expose(generic=True, template='index.html')
-    def index(self):
-        return dict()
-
-    @index.when(method='POST')
-    def index_post(self, q):
-        redirect('http://pecan.readthedocs.org/en/latest/search.html?q=%s' % q)
-
-    @expose('error.html')
-    def error(self, status):
-        try:
-            status = int(status)
-        except ValueError:  # pragma: no cover
-            status = 500
-        message = getattr(status_map.get(status), 'explanation', '')
-        return dict(status=status, message=message)
+class ConnectionsController(RestController):
+    graph = ConnectionsGraphController()
 
 
 class RootController(RestController):
-    @expose(template='json')
-    def get(self):
-        return {'hello': 'world'}
+    connections = ConnectionsController()

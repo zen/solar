@@ -99,7 +99,7 @@
   load_connections = function() {
     var connections, connections_get;
     connections = $.Deferred();
-    connections_get = $.get('/connections.json', (function(data) {
+    connections_get = $.get('/connections/graph', (function(data) {
       var edge, node, ret;
       console.log('data', data);
       ret = {
