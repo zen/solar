@@ -37,14 +37,12 @@ def deploy():
     openstack_rabbitmq_user = vr.create('openstack_rabbitmq_user', 'resources/rabbitmq_user/', {'user_name': 'openstack', 'password': 'openstack_password'})[0]
 
     mariadb_service1 = vr.create('mariadb_service1', 'resources/mariadb_service', {'image': 'mariadb', 'root_password': 'mariadb', 'port': 3306})[0]
-    keystone_db = vr.create('keystone_db', 'resources/mariadb_keystone_db/', {'db_name': 'keystone_db', 'login_user': 'root'})[0]
+    keystone_db = vr.create('keystone_db', 'resources/mariadb_db/', {'db_name': 'keystone_db', 'login_user': 'root'})[0]
     keystone_db_user = vr.create('keystone_db_user', 'resources/mariadb_user/', {'user_name': 'keystone', 'user_password': 'keystone', 'login_user': 'root'})[0]
 
-    keystone_config1 = vr.create('keystone_config1', GitProvider(GIT_KEYSTONE_RESOURCE_URL, path='keystone_config'), {'config_dir': '/etc/solar/keystone', 'admin_token': 'admin'})[0]
-    keystone_service1 = vr.create('keystone_service1', RemoteZipProvider(ZIP_KEYSTONE_RESOURCE_URL, 'keystone_service'), {'port': 5001, 'admin_port': 35357})[0]
-
-    keystone_config2 = vr.create('keystone_config2', GitProvider(GIT_KEYSTONE_RESOURCE_URL, 'keystone_config'), {'config_dir': '/etc/solar/keystone', 'admin_token': 'admin'})[0]
-    keystone_service2 = vr.create('keystone_service2', GitProvider(GIT_KEYSTONE_RESOURCE_URL, 'keystone_service'), {'port': 5002, 'admin_port': 35358})[0]
+    keystone_base_config = vr.create('keystone_base_config', 'resources/keystone_base_config', {'admin_token': 'admin'})[0]
+    keystone_service1 = vr.create('keystone_service1', 'resources/keystone_service', {'port': 5001, 'admin_port': 35358, 'config_dir': '/etc/solar/keystone1'})[0]
+    keystone_service2 = vr.create('keystone_service2', 'resources/keystone_service', {'port': 5002, 'admin_port': 35359, 'config_dir': '/etc/solar/keystone2'})[0]
 
     haproxy_keystone_config = vr.create('haproxy_keystone1_config', 'resources/haproxy_service_config/', {'name': 'keystone_config', 'listen_port': 5000, 'servers':[], 'ports':[]})[0]
     haproxy_config = vr.create('haproxy_config', 'resources/haproxy_config', {'configs_names':[], 'configs_ports':[], 'listen_ports':[], 'configs':[]})[0]
@@ -53,7 +51,7 @@ def deploy():
     glance_db = vr.create('glance_db', 'resources/mariadb_db/', {'db_name': 'glance_db', 'login_user': 'root'})[0]
     glance_db_user = vr.create('glance_db_user', 'resources/mariadb_user/', {'user_name': 'glance', 'user_password': 'glance', 'login_user': 'root'})[0]
 
-    services_tenant = vr.create('glance_keystone_tenant', GitProvider(GIT_KEYSTONE_RESOURCE_URL, 'keystone_tenant'), {'tenant_name': 'services'})[0]
+    services_tenant = vr.create('services_tenant', GitProvider(GIT_KEYSTONE_RESOURCE_URL, 'keystone_tenant'), {'tenant_name': 'services'})[0]
 
     glance_keystone_user = vr.create('glance_keystone_user', GitProvider(GIT_KEYSTONE_RESOURCE_URL, 'keystone_user'), {'user_name': 'glance_admin', 'user_password': 'password1234', 'tenant_name': 'service_admins'})[0]
     glance_keystone_role = vr.create('glance_keystone_role', GitProvider(GIT_KEYSTONE_RESOURCE_URL, 'keystone_role'), {'role_name': 'admin'})[0]
@@ -99,19 +97,13 @@ def deploy():
     signals.connect(mariadb_service1, keystone_db_user, {'root_password': 'login_password', 'port': 'login_port'})
     signals.connect(keystone_db, keystone_db_user, {'db_name': 'db_name'})
 
-    signals.connect(node1, keystone_config1)
-    signals.connect(mariadb_service1, keystone_config1, {'ip': 'db_host', 'port': 'db_port'})
-    signals.connect(keystone_db_user, keystone_config1, {'db_name': 'db_name', 'user_name': 'db_user', 'user_password': 'db_password'})
+    signals.connect(mariadb_service1, keystone_base_config, {'ip': 'db_host', 'port': 'db_port'})
+    signals.connect(keystone_db_user, keystone_base_config, {'db_name': 'db_name', 'user_name': 'db_user', 'user_password': 'db_password'})
 
     signals.connect(node1, keystone_service1)
-    signals.connect(keystone_config1, keystone_service1, {'config_dir': 'config_dir'})
-
-    signals.connect(node2, keystone_config2)
-    signals.connect(mariadb_service1, keystone_config2, {'ip': 'db_host', 'port': 'db_port'})
-    signals.connect(keystone_db_user, keystone_config2, {'db_name': 'db_name', 'user_name': 'db_user', 'user_password': 'db_password'})
-
+    signals.connect(keystone_base_config, keystone_service1)
     signals.connect(node2, keystone_service2)
-    signals.connect(keystone_config2, keystone_service2, {'config_dir': 'config_dir'})
+    signals.connect(keystone_base_config, keystone_service2)
 
     signals.connect(keystone_service1, haproxy_keystone_config, {'ip': 'servers', 'port': 'ports'})
     signals.connect(keystone_service2, haproxy_keystone_config, {'ip': 'servers', 'port': 'ports'})
@@ -123,11 +115,13 @@ def deploy():
     signals.connect(haproxy_config, haproxy_service, {'listen_ports': 'ports', 'config_dir': 'host_binds'})
 
     # keystone configuration
-    signals.connect(keystone_config1, admin_tenant)
+    signals.connect(keystone_base_config, admin_tenant)
     signals.connect(keystone_service1, admin_tenant, {'admin_port': 'keystone_port', 'ip': 'keystone_host'})
+    signals.connect(keystone_service1, admin_tenant, {'ip': 'ip', 'ssh_user': 'ssh_user', 'ssh_key': 'ssh_key'})
     signals.connect(admin_tenant, admin_user)
     signals.connect(admin_user, admin_role)
-    signals.connect(keystone_config1, keystone_service_endpoint)
+    signals.connect(keystone_base_config, keystone_service_endpoint)
+    signals.connect(keystone_service1, keystone_service_endpoint, {'ip': 'ip', 'ssh_user': 'ssh_user', 'ssh_key': 'ssh_key'})
     signals.connect(keystone_service1, keystone_service_endpoint, {'ip': 'keystone_host','admin_port': 'admin_port', 'port': 'port'})
     signals.connect(keystone_service1, keystone_service_endpoint, {'admin_port': 'keystone_port'})
 
@@ -139,12 +133,13 @@ def deploy():
     signals.connect(glance_db, glance_db_user, {'db_name': 'db_name'})
 
     # glance keystone user
-    signals.connect(keystone_config1, services_tenant)
+    signals.connect(keystone_base_config, services_tenant)
     signals.connect(keystone_service1, services_tenant, {'admin_port': 'keystone_port', 'ip': 'keystone_host'})
+    signals.connect(keystone_service1, services_tenant, {'ip': 'ip', 'ssh_user': 'ssh_user', 'ssh_key': 'ssh_key'})
     signals.connect(services_tenant, glance_keystone_user)  # standard ip, ssh_key, ssh_user
     signals.connect(glance_keystone_user, glance_keystone_role)
     signals.connect(keystone_service1, glance_keystone_user, {'admin_port': 'keystone_port', 'ip': 'keystone_host'})
-    signals.connect(keystone_config1, glance_keystone_user, {'admin_token': 'admin_token'})
+    signals.connect(keystone_base_config, glance_keystone_user, {'admin_token': 'admin_token'})
     signals.connect(glance_keystone_user, glance_config, {'user_name': 'keystone_admin_user', 'user_password': 'keystone_admin_password', 'tenant_name': 'keystone_admin_tenant'})
     signals.connect(keystone_service2, glance_config, {'admin_port': 'keystone_admin_port'})
 
@@ -174,7 +169,7 @@ def deploy():
     # glance keystone endpoint
     #signals.connect(glance_api_container, glance_api_endpoint, {'ip': 'ip', 'ssh_user': 'ssh_user', 'ssh_key': 'ssh_key'})
     signals.connect(haproxy_service, glance_api_endpoint, {'ip': 'ip', 'ssh_user': 'ssh_user', 'ssh_key': 'ssh_key'})
-    signals.connect(keystone_config1, glance_api_endpoint, {'admin_token': 'admin_token'})
+    signals.connect(keystone_base_config, glance_api_endpoint, {'admin_token': 'admin_token'})
     signals.connect(keystone_service1, glance_api_endpoint, {'ip': 'keystone_host', 'admin_port': 'keystone_port'})
     signals.connect(haproxy_glance_api_config, glance_api_endpoint, {'listen_port': 'admin_port'})
     signals.connect(haproxy_glance_api_config, glance_api_endpoint, {'listen_port': 'port'})
@@ -197,9 +192,7 @@ def deploy():
     actions.resource_action(openstack_rabbitmq_user, 'run')
     actions.resource_action(keystone_db, 'run')
     actions.resource_action(keystone_db_user, 'run')
-    actions.resource_action(keystone_config1, 'run')
     actions.resource_action(keystone_service1, 'run')
-    actions.resource_action(keystone_config2, 'run')
     actions.resource_action(keystone_service2, 'run')
 
     actions.resource_action(haproxy_config, 'run')
@@ -290,9 +283,7 @@ def undeploy():
     actions.resource_action(resources['haproxy_service'], 'remove')
     actions.resource_action(resources['haproxy_config'], 'remove')
     actions.resource_action(resources['keystone_service2'], 'remove')
-    actions.resource_action(resources['keystone_config2'], 'remove')
     actions.resource_action(resources['keystone_service1'], 'remove')
-    actions.resource_action(resources['keystone_config1'], 'remove')
     actions.resource_action(resources['keystone_db_user'], 'remove')
     actions.resource_action(resources['keystone_db'], 'remove')
     actions.resource_action(resources['mariadb_service1'], 'remove')

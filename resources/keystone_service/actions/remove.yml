@@ -7,3 +7,4 @@
         image: {{ image }}
         name: {{ resource_name }}
         state: absent
+    - file: path={{config_dir}} state=absent
