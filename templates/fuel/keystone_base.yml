@@ -4,7 +4,7 @@ resources:
   - id: keystone_db
     from: resources/mariadb_db
     values:
-      db_name: {{db_name}}
+      db_name: '{{db_name}}'
       login_user: '{{login_user}}'
       login_password: '{{login_password}}'
       login_port: '{{login_port}}'
@@ -24,3 +24,15 @@ resources:
       ip: 'keystone_db::ip'
       ssh_user: 'keystone_db::ssh_user'
       ssh_key: 'keystone_db::ssh_key'
+
+  - id: keystone_base_config
+    from: resources/keystone_base_config
+    values:
+      admin_token: '{{admin_token}}'
+      db_user: 'keystone_db_user::user_name'
+      db_password: 'keystone_db_user::user_password'
+      db_name: 'keystone_db::db_name'
+      db_host: 'keystone_db::ip'
+      db_port: 'keystone_db::login_port'
+
+tags: ['resources/keystone', 'resource/keystone_base']
