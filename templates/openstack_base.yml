@@ -5,7 +5,7 @@ resources:
     from: resources/keystone_tenant
     values:
       tenant_name: admin
-      keystone_port: '{{keystone_admin_port}}'
+      keystone_admin_port: '{{keystone_admin_port}}'
       keystone_host: '{{keystone_ip}}'
       admin_token: '{{admin_token}}'
       ip: '{{ip}}'
@@ -18,7 +18,7 @@ resources:
       user_name: 'admin'
       user_password: 'admin'
       tenant_name: 'admin_tenant::tenant_name'
-      keystone_port: '{{keystone_admin_port}}'
+      keystone_admin_port: '{{keystone_admin_port}}'
       keystone_host: '{{keystone_ip}}'
       admin_token: '{{admin_token}}'
       ip: '{{ip}}'
@@ -53,7 +53,7 @@ resources:
     from: resources/keystone_tenant
     values:
       tenant_name: services
-      keystone_port: '{{keystone_admin_port}}'
+      keystone_admin_port: '{{keystone_admin_port}}'
       keystone_host: '{{keystone_ip}}'
       admin_token: '{{admin_token}}'
       ip: '{{ip}}'

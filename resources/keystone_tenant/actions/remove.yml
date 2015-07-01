@@ -2,4 +2,4 @@
   sudo: yes
   tasks:
     - name: keystone tenant
-      keystone_user: endpoint=http://{{keystone_host}}:{{keystone_port}}/v2.0/ token={{admin_token}} tenant={{tenant_name}} state=absent
+      keystone_user: endpoint=http://{{keystone_host}}:{{keystone_admin_port}}/v2.0/ token={{admin_token}} tenant={{tenant_name}} state=absent
