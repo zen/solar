@@ -36,7 +36,6 @@ def deploy():
     signals.Connections.clear()
 
     node1 = vr.create('node1', 'resources/ro_node/', {'ip': '10.0.0.3', 'ssh_key': '/vagrant/.vagrant/machines/solar-dev1/virtualbox/private_key', 'ssh_user': 'vagrant'})[0]
-
     rabbitmq_service1 = vr.create('rabbitmq_service1', 'resources/rabbitmq_service/', {'management_port': 15672, 'port': 5672, 'container_name': 'rabbitmq_service1', 'image': 'rabbitmq:3-management'})[0]
     openstack_vhost = vr.create('openstack_vhost', 'resources/rabbitmq_vhost/', {'vhost_name': 'openstack'})[0]
     openstack_rabbitmq_user = vr.create('openstack_rabbitmq_user', 'resources/rabbitmq_user/', {'user_name': 'openstack', 'password': 'openstack_password'})[0]
@@ -77,6 +76,8 @@ def deploy():
 
     # TODO: 'services' tenant-id is hardcoded
     #nova_keystone_service_endpoint = vr.create('nova_keystone_service_endpoint', 'resources/keystone_service_endpoint', {'adminurl': 'http://{{ip}}:{{admin_port}}/v2/services', 'internalurl': 'http://{{ip}}:{{public_port}}/v2/services', 'publicurl': 'http://{{ip}}:{{port}}/v2/services', 'description': 'OpenStack Compute Service', 'type': 'compute', 'port': 8776, 'admin_port': 8776})[0]
+
+    openrc = vr.create('openrc_file', 'resources/openrc_file', {})[0]
 
 
     signals.connect(node1, rabbitmq_service1)
@@ -142,6 +143,10 @@ def deploy():
     #signals.connect(nova_network_puppet, nova_keystone_service_endpoint, {'ip': 'ip', 'ssh_key': 'ssh_key', 'ssh_user': 'ssh_user'})
     #signals.connect(keystone_puppet, nova_keystone_service_endpoint, {'ip': 'keystone_host', 'admin_port': 'keystone_port', 'admin_token': 'admin_token'})
 
+    signals.connect(node1, openrc)
+    signals.connect(keystone_puppet, openrc, {'ip': 'keystone_host', 'admin_port':'keystone_port'})
+    signals.connect(admin_user, openrc, {'user_name': 'user_name','user_password':'password', 'tenant_name': 'tenant'})
+
 
     has_errors = False
     for r in locals().values():
@@ -168,6 +173,7 @@ def deploy():
     actions.resource_action(keystone_db, 'run')
     actions.resource_action(keystone_db_user, 'run')
     actions.resource_action(keystone_puppet, 'run')
+    actions.resource_action(openrc, 'run')
 
     actions.resource_action(admin_tenant, 'run')
     actions.resource_action(admin_user, 'run')
@@ -223,6 +229,7 @@ def undeploy():
     actions.resource_action(resources['admin_user'], 'remove')
     actions.resource_action(resources['admin_tenant'], 'remove')
 
+    actions.resource_action(resources['openrc_file'], 'remove')
     actions.resource_action(resources['keystone_puppet'], 'remove')
     actions.resource_action(resources['keystone_db_user'], 'remove')
     actions.resource_action(resources['keystone_db'], 'remove')
