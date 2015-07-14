@@ -122,7 +122,8 @@ def deploy():
     signals.connect(keystone_puppet, neutron_keystone_service_endpoint, {'ip': 'keystone_host', 'admin_port': 'keystone_admin_port', 'admin_token': 'admin_token'})
 
     # CINDER
-    # signals.connect(node1, cinder_puppet)
+    cinder_puppet = vr.create('cinder_puppet', 'resources/cinder_puppet', {})[0]
+    signals.connect(node1, cinder_puppet)
     # signals.connect(keystone_puppet, cinder_puppet, {'ip': 'keystone_host', 'port': 'keystone_port'})
 
     # signals.connect(services_tenant, cinder_keystone_user)
