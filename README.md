@@ -29,6 +29,30 @@ sudo docker ps -a
 sudo docker exec -it foo
 ```
 
+## `libvirt` support
+
+```
+vagrant plugin install vagrant-libvirt
+vagrant plugin install vagrant-mutate
+vagrant mutate trusty64 libvirt
+```
+
+You might want to create `/etc/policykit-1/rules.d/49-org.libvirt.unix.manager.rules`:
+```
+/* Allow users in kvm group to manage the libvirt
+daemon without authentication */
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.libvirt.unix.manage" &&
+        subject.isInGroup("przemek")) {
+            return polkit.Result.YES;
+    }
+})
+```
+(on ArchLinux, you might want to read https://wiki.archlinux.org/index.php/Vagrant#vagrant-libvirt
+for more info, especially the `curl` part can be useful; if you get errors about firewall,
+try installing `firewalld`) or add yourself to the `libvirt` group (on Ubuntu).
+
 ## Solar usage
 
 * To get data for the resource bar (raw and pretty-JSON):

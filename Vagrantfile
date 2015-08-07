@@ -27,18 +27,21 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       #config.vm.box = "deb/jessie-amd64"
       #config.vm.box = "rustyrobot/deb-jessie-amd64"
       #config.vm.box = "ubuntu/trusty64"
-      config.vm.box = "solar-master.box"
+      config.vm.box = "solar-master"
 
     config.vm.provision "shell", inline: solar_script, privileged: true
     config.vm.provision "shell", inline: master_celery, privileged: true
     config.vm.provision "file", source: "~/.vagrant.d/insecure_private_key", destination: "/vagrant/tmp/keys/ssh_private"
     config.vm.provision "file", source: "ansible.cfg", destination: "/home/vagrant/.ansible.cfg"
-    config.vm.network "private_network", ip: "10.0.0.2"
+    config.vm.network "private_network", ip: "10.0.0.2", :dev => "solbr0", :mode => 'nat'
     config.vm.host_name = "solar-dev"
 
-    config.vm.provider :virtualbox do |v|
-      v.customize ["modifyvm", :id, "--memory", 1024]
-      v.name = "solar-dev"
+    config.vm.provider :libvirt do |v|
+      #v.customize ["modifyvm", :id, "--memory", 1524]
+      #v.name = "solar-dev"
+      v.driver = "kvm"
+      v.memory = 2048
+      v.cpus = 4
     end
   end
 
@@ -60,9 +63,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       config.vm.network "private_network", ip: "10.0.0.#{ip_index}"
       config.vm.host_name = "solar-dev#{index}"
 
-      config.vm.provider :virtualbox do |v|
-        v.customize ["modifyvm", :id, "--memory", 1024]
-        v.name = "solar-dev#{index}"
+      config.vm.provider :libvirt do |v|
+        if index == 1 then
+          #v.customize ["modifyvm", :id, "--memory", 1524]
+        else
+          #v.customize ["modifyvm", :id, "--memory", 1024]
+        end
+        #v.name = "solar-dev#{index}"
+        v.host = "solar-dev#{index}"
       end
     end
   end

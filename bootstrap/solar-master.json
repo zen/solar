@@ -1,10 +1,30 @@
 {
-  "builders": [{
-    "type": "virtualbox-ovf",
-    "source_path": "trusty64/box.ovf",
-    "ssh_username": "vagrant",
-    "ssh_password": "vagrant",
-    "shutdown_command": "echo 'vagrant' | sudo -S shutdown -P now"
+  "builders": [
+  {
+    "type": "qemu",
+    "iso_url": "trusty64/box.img",
+    "iso_checksum": "2f2a5e1ff2e3db5dced78ce233e1c0c2",
+    "iso_checksum_type": "md5",
+    "output_directory": "output_solar_master",
+    "ssh_wait_timeout": "30s",
+    "shutdown_command": "shutdown -P now",
+    "disk_size": 5000,
+    "format": "qcow2",
+    "headless": false,
+    "accelerator": "kvm",
+    "http_directory": "httpdir",
+    "http_port_min": 10082,
+    "http_port_max": 10089,
+    "ssh_host_port_min": 2222,
+    "ssh_host_port_max": 2229,
+    "ssh_username": "root",
+    "ssh_password": "",
+    "ssh_port": 22,
+    "ssh_wait_timeout": "90m",
+    "vm_name": "tdhtest",
+    "net_device": "virtio-net",
+    "disk_interface": "virtio",
+    "boot_wait": "5s"
   }],
   "provisioners": [
     {

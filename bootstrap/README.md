@@ -2,7 +2,8 @@
 
 In `bootstrap/trusty64` directory there are `box.ovf` and `box-disk1.vmdk`
 files from the `trusty64` Vagrant box (normally found in
- `~/.vagrant.d/boxes/trusty64/0/virtualbox`).
+ `~/.vagrant.d/boxes/trusty64/0/virtualbox`). For `libvirt` you might want
+to copy files from the `~/.vagrant.d/boxes/trusty64/0/libvirt` dir.
 
 To build, install Packer (https://www.packer.io/):
 ```
