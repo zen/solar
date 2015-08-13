@@ -1,0 +1,7 @@
+- hosts: [{{ ip }}]
+  sudo: yes
+  tasks:
+    - name: python openstackclient
+      apt:
+        name: python-openstackclient
+        state: absent
