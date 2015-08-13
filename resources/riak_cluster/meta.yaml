@@ -1,0 +1,16 @@
+id: riak_cluster
+handler: python
+version: 1.0.0
+input:
+    nodes:
+      schema: [{ip: str}]
+      value: []
+    ip:
+      schema: str!
+      value:
+    ssh_key:
+      schema: str!
+      value:
+    ssh_user:
+      schema: str!
+      value:

@@ -3,7 +3,7 @@
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
-SLAVES_COUNT = 2
+SLAVES_COUNT = 3
 
 init_script = <<SCRIPT
 apt-get update
@@ -60,7 +60,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       config.vm.host_name = "solar-dev#{index}"
 
       config.vm.provider :virtualbox do |v|
-        v.customize ["modifyvm", :id, "--memory", 1024]
+        # if index == 3
+        #   v.customize ["modifyvm", :id, "--memory", 1024]
+        # else
+          v.customize ["modifyvm", :id, "--memory", 1024]
+        # end
         v.name = "solar-dev#{index}"
       end
     end

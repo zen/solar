@@ -1,0 +1,6 @@
+- hosts: [{{ip}}]
+  sudo: yes
+  tasks:
+    - shell: riak-admin cluster join {{item['value']}}
+      with_items: {{join_to}}
+    - shell: riak-admin cluster commit
