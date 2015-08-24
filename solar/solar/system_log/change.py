@@ -8,7 +8,6 @@ from solar.core import signals
 from solar.core import resource
 from solar import utils
 from solar.interfaces.db import get_db
-from solar.core import actions
 from solar.system_log import data
 from solar.orchestration import graph
 
@@ -106,7 +105,13 @@ def send_to_orchestration():
 
     # what it should be?
     dg.graph['name'] = 'system_log'
-    return graph.create_plan_from_graph(dg)
+    uid = graph.create_plan_from_graph(dg)
+
+    history = db.read('history', collection=db.COLLECTIONS.state_log) or []
+    history.insert(0, uid)
+    db.save('history', history, collection=db.COLLECTIONS.state_log)
+
+    return uid
 
 
 def parameters(res, action):
