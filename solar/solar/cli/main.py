@@ -322,6 +322,8 @@ def init_cli_resource():
     @resource.command()
     @click.argument('template')
     def quick_check(template):
+        """Quickly check resource. WARNING: clears the DB!
+        """
         db.clear()
         signals.Connections.clear()
 
