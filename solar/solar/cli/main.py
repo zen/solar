@@ -25,6 +25,7 @@ import os
 import pprint
 import sys
 import tabulate
+import uuid
 import yaml
 
 from solar import utils
@@ -37,6 +38,8 @@ from solar.core.resource import virtual_resource as vr
 from solar.interfaces.db import get_db
 from solar import errors
 from solar.core.log import log
+from solar.core import testing
+from solar.core import validation
 
 from solar.cli import executors
 from solar.cli.orch import orchestration
@@ -314,6 +317,27 @@ def init_cli_resource():
         resources = vr.create(name, base_path, args_parsed)
         for res in resources:
             click.echo(res.color_repr())
+
+
+    @resource.command()
+    @click.argument('template')
+    def quick_check(template):
+        db.clear()
+        signals.Connections.clear()
+
+        name = '{}-{}'.format(os.path.split(template)[-1],
+                              uuid.uuid4())
+        node1 = vr.create('nodes', 'templates/nodes.yml', {})[0]
+        r = vr.create(name, template, {})[0]
+
+        signals.connect(node1, r)
+
+        validation.validate_resource(r)
+
+        actions.resource_action(r, 'run')
+
+        testing.test_all()
+
 
     @resource.command()
     @click.option('--name', default=None)
