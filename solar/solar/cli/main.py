@@ -25,6 +25,7 @@ import os
 import pprint
 import sys
 import tabulate
+import time
 import uuid
 import yaml
 
@@ -324,19 +325,42 @@ def init_cli_resource():
     def quick_check(template):
         """Quickly check resource. WARNING: clears the DB!
         """
-        db.clear()
-        signals.Connections.clear()
+        from solar.system_log import change
+        from solar.orchestration import graph
+        from solar.orchestration import tasks
 
         name = '{}-{}'.format(os.path.split(template)[-1],
                               uuid.uuid4())
-        node1 = vr.create('nodes', 'templates/nodes.yml', {})[0]
-        r = vr.create(name, template, {})[0]
+        try:
+            node1 = sresource.load('node1')
+        except KeyError:
+            node1 = vr.create('nodes', 'templates/nodes.yml', {})[0]
 
-        signals.connect(node1, r)
+        rs = vr.create(name, template, {})
 
-        validation.validate_resource(r)
+        for r in rs:
+            signals.connect(node1, r)
 
-        actions.resource_action(r, 'run')
+        for r in rs:
+            validation.validate_resource(r)
+
+        change.stage_changes()
+        uid = change.send_to_orchestration()
+
+        tasks.schedule_start.apply_async(
+            args=[uid],
+            kwargs={'start': None, 'end': None},
+            queue='scheduler')
+
+        while True:
+            report = graph.report_topo(uid)
+            for rr in report:
+                click.echo(rr)
+
+            if all([rr[1] not in ['PENDING', 'INPROGRESS'] for rr in report]):
+                break
+
+            time.sleep(1)
 
         testing.test_all()
 
