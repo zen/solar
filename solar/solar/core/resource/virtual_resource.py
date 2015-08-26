@@ -33,28 +33,37 @@ def create_resource(name, base_path, args, virtual_resource=None):
 
     tags = metadata.get('tags', [])
 
+    #XXX: init resource with empty list. It will be filled when connections will be made
+    args = {key: (value if not isinstance(value, list) else []) for key, value in args.items()}
     resource = Resource(name, metadata, args, tags, virtual_resource)
     return resource
 
 
 def create_virtual_resource(vr_name, template):
     resources = template['resources']
-    connections = []
     created_resources = []
 
     cwd = os.getcwd()
     for resource in resources:
+        connections = []
         name = resource['id']
         base_path = os.path.join(cwd, resource['from'])
         args = resource['values']
         new_resources = create(name, base_path, args, vr_name)
         created_resources += new_resources
 
+        def add_connection(element):
+            if isinstance(element, basestring) and '::' in element:
+                emitter, src = element.split('::')
+                connections.append((emitter, name, {src: key}))
+
         if not is_virtual(base_path):
             for key, arg in args.items():
-                if isinstance(arg, basestring) and '::' in arg:
-                    emitter, src = arg.split('::')
-                    connections.append((emitter, name, {src: key}))
+                if isinstance(arg, list):
+                    for item in arg:
+                        add_connection(item)
+                else:
+                    add_connection(arg)
 
         db = load_all()
         for emitter, reciver, mapping in connections:
@@ -174,9 +183,10 @@ def _compile_file(name, path, kwargs):
 
 
 def get_inputs(content):
-    env = Environment()
+    env = Environment(trim_blocks=True, lstrip_blocks=True)
+    jinja_globals = env.globals.keys()
     ast = env.parse(content)
-    return meta.find_undeclared_variables(ast)
+    return meta.find_undeclared_variables(ast) - set(jinja_globals)
 
 
 def _get_template(name, content, kwargs, inputs):
@@ -186,7 +196,7 @@ def _get_template(name, content, kwargs, inputs):
             missing.append(input)
     if missing:
         raise Exception('[{0}] Validation error. Missing data in input: {1}'.format(name, missing))
-    template = Template(content)
+    template = Template(content, trim_blocks=True, lstrip_blocks=True)
     template = template.render(str=str, zip=zip, **kwargs)
     return template
 
