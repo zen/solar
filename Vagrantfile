@@ -4,21 +4,32 @@
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 SLAVES_COUNT = 2
+ANSIBLE_CONFIG_PATH = "/etc/ansible"
+ANSIBLE_CONFIG_FILE = "ansible.cfg"
+ANSIBLE_LOG = "/var/log/ansible.log"
+
+config = "#{ANSIBLE_CONFIG_PATH}/#{ANSIBLE_CONFIG_FILE}"
 
 init_script = <<SCRIPT
-apt-get update
 apt-get -y install python-pip python-dev
 pip install ansible
-ansible-playbook -i "localhost," -c local /vagrant/main.yml /vagrant/docker.yml
+mkdir -p "#{ANSIBLE_CONFIG_PATH}"
+echo "[defaults]" > "#{config}"
+echo "log_path = #{ANSIBLE_LOG}" >> "#{config}"
+ansible-playbook -v -i "localhost," -c local /vagrant/main.yml /vagrant/docker.yml
 SCRIPT
 
 slave_script = <<SCRIPT
-apt-get update
-apt-get upgrade
-apt-get dist-upgrade
 apt-get -y install python-pip python-dev
 pip install ansible
-ansible-playbook -i "localhost," -c local /vagrant/main.yml /vagrant/docker.yml /vagrant/slave.yml /vagrant/slave_cinder.yml
+mkdir -p "#{ANSIBLE_CONFIG_PATH}"
+echo "[defaults]" > "#{config}"
+echo "log_path = #{ANSIBLE_LOG}" >> "#{config}"
+ansible-playbook -v -i "localhost," -c local /vagrant/main.yml /vagrant/docker.yml /vagrant/slave.yml /vagrant/slave_cinder.yml
+apt-get update
+apt-get -y upgrade
+add-apt-repository -y cloud-archive:juno
+apt-get update || apt-get update --fix-missing
 SCRIPT
 
 master_celery = <<SCRIPT
