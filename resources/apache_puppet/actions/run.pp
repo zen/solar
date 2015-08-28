@@ -118,3 +118,10 @@ class {'apache':
   package_ensure          => $package_ensure,
   use_optional_includes   => $use_optional_includes,
 }
+
+# Debian/Ubuntu only is currently supported by this resource
+$service_name = 'apache2'
+Service <| name == $service_name or title == $service_name |> {
+    restart    => 'apachectl graceful',
+    hasrestart => true,
+}
