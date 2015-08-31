@@ -107,48 +107,73 @@ class Neo4jDB(object):
 
         return r
 
+    def _nodes_query(self,
+                     name,
+                     collection=DEFAULT_COLLECTION,
+                     query_type='MATCH',
+                     operation_type='RETURN'):
+        kwargs = {
+            'name': name,
+        }
+
+        query = ('%(query_type)s (n:%(collection)s {name:{name}}) '
+                 '%(operation_type)s n' % {
+                    'collection': collection.name,
+                    'query_type': query_type,
+                    'operation_type': operation_type,
+                })
+
+        return query, kwargs
+
     def get(self, name, collection=DEFAULT_COLLECTION):
-        res = self._r.cypher.execute(
-            'MATCH (n:%(collection)s {name:{name}}) RETURN n' % {
-                'collection': collection.name,
-            }, {
-                'name': name,
-            }
+        query, kwargs = self._nodes_query(
+            name, collection=collection
         )
+        res = self._r.cypher.execute(query, kwargs)
 
         if res:
             return res[0].n
 
     def get_or_create(self, name, args={}, collection=DEFAULT_COLLECTION):
-        n = self.get(name, collection=collection)
+        log.log.debug(
+            'Get or create node %s, name %s with args %s',
+            collection.name,
+            name,
+            args
+        )
 
-        if n:
-            if args != n.properties:
-                n.properties.update(args)
-                n.push()
-            return n
+        query, kwargs = self._nodes_query(
+            name, collection=collection, query_type='MERGE'
+        )
 
-        return self.create(name, args=args, collection=collection)
+        n = self._r.cypher.execute(query, kwargs)[0].n
+
+        if args != n.properties:
+            n.properties.update(args)
+            n.push()
+        return n
 
     def _relations_query(self,
                          source=None,
                          dest=None,
                          type_=DEFAULT_RELATION,
-                         query_type='RETURN'):
+                         query_type='MATCH',
+                         operation_type='RETURN'):
         kwargs = {}
-        source_query = '(n)'
+        source_query = '()'
         if source:
             source_query = '(n {name:{source_name}})'
             kwargs['source_name'] = source.properties['name']
-        dest_query = '(m)'
+        dest_query = '()'
         if dest:
             dest_query = '(m {name:{dest_name}})'
             kwargs['dest_name'] = dest.properties['name']
         rel_query = '[r:%(type_)s]' % {'type_': type_.name}
 
-        query = ('MATCH %(source_query)s-%(rel_query)s->'
-                 '%(dest_query)s %(query_type)s r' % {
+        query = ('%(query_type)s %(source_query)s-%(rel_query)s->'
+                 '%(dest_query)s %(operation_type)s r' % {
                      'dest_query': dest_query,
+                     'operation_type': operation_type,
                      'query_type': query_type,
                      'rel_query': rel_query,
                      'source_query': source_query,
@@ -158,7 +183,7 @@ class Neo4jDB(object):
 
     def delete_relations(self, source=None, dest=None, type_=DEFAULT_RELATION):
         query, kwargs = self._relations_query(
-            source=source, dest=dest, type_=type_, query_type='DELETE'
+            source=source, dest=dest, type_=type_, operation_type='DELETE'
         )
 
         self._r.cypher.execute(query, kwargs)
@@ -177,13 +202,21 @@ class Neo4jDB(object):
                                dest,
                                args={},
                                type_=DEFAULT_RELATION):
-        rel = self.get_relations(source=source, dest=dest, type_=type_)
+        log.log.debug(
+            'Get or create relation %s from %s to %s with args %s',
+            type_.name,
+            source.properties['name'],
+            dest.properties['name'],
+            args
+        )
+        query, kwargs = self._relations_query(
+            source=source, dest=dest, type_=type_, query_type='MERGE'
+        )
 
-        if rel:
-            r = rel[0]
-            if args != r.properties:
-                r.properties.update(args)
-                r.push()
-            return r
+        rel = self._r.cypher.execute(query, kwargs)
 
-        return self.create_relation(source, dest, args=args, type_=type_)
+        r = rel[0].r
+        if args != r.properties:
+            r.properties.update(args)
+            r.push()
+        return r
