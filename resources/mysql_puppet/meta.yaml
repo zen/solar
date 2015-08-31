@@ -1,0 +1,92 @@
+id: mysql_puppet
+handler: puppet
+puppet_module: mysql
+version: 1.0.0
+input:
+    config_file:
+      schema: str
+      value: '/etc/mysql/my.cnf'
+    includedir:
+      schema: str
+      value: '/etc/mysql/conf.d'
+    install_options:
+      schema: str
+      value:
+    install_secret_file:
+      schema: str
+      value: '/.mysql_secret'
+    manage_config_file:
+      schema: bool
+      value: true
+    override_options:
+      schema: {}
+      value: {}
+    package_ensure:
+      schema: str
+      value: 'present'
+    package_name:
+      schema: str
+      value: 'mysql-server'
+    purge_conf_dir:
+      schema: bool
+      value: false
+    remove_default_accounts:
+      schema: bool
+      value: false
+    restart:
+      schema: bool
+      value: false
+    root_group:
+      schema: str
+      value: 'root'
+    mysql_group:
+      schema: str
+      value: 'mysql'
+    root_password:
+      schema: str
+      value: 'UNSET'
+    service_name:
+      schema: str
+      value: 'mysqld'
+    service_provider:
+      schema: str
+      value: 'upstart'
+    create_root_user:
+      schema: bool
+      value: true
+    create_root_my_cnf:
+      schema: bool
+      value: true
+    users:
+      schema: {}
+      value: {}
+    grants:
+      schema: {}
+      value: {}
+    databases:
+      schema: {}
+      value: {}
+
+
+    client_bindings_enable:
+      schema: bool
+      value: false
+    client_package_name:
+      schema: str
+      value: 'mysql-client'
+
+    git:
+      schema: {repository: str!, branch: str!}
+      value: {repository: 'https://github.com/puppetlabs/puppetlabs-mysql', branch: '3.6.0'}
+
+    ip:
+      schema: str!
+      value:
+    ssh_key:
+      schema: str!
+      value:
+    ssh_user:
+      schema: str!
+      value:
+
+tags: [resource/mysql_service, resources/mysql]

@@ -42,13 +42,9 @@ def setup_resources():
 
     node1, node2 = vr.create('nodes', 'templates/nodes.yml', {})
 
-    # MARIADB
-    mariadb_service1 = vr.create('mariadb_service1', 'resources/mariadb_service', {
-        'image': 'mariadb',
-        'port': 3306
-    })[0]
-
-    signals.connect(node1, mariadb_service1)
+    # MySQL
+    mysql_puppet1 = vr.create('mysql_puppet1', 'resources/mysql_puppet', {})[0]
+    signals.connect(node1, mysql_puppet1)
 
     # RABBIT
     rabbitmq_service1 = vr.create('rabbitmq_service1', 'resources/rabbitmq_service/', {
@@ -75,7 +71,8 @@ def setup_resources():
     keystone_puppet = vr.create('keystone_puppet', 'resources/keystone_puppet', {})[0]
     keystone_db = vr.create('keystone_db', 'resources/mariadb_db/', {
         'db_name': 'keystone_db',
-        'login_user': 'root'
+        'login_user': 'root',
+        'login_port': 3306
     })[0]
     keystone_db_user = vr.create('keystone_db_user', 'resources/mariadb_user/', {
         'user_name': 'keystone',
@@ -107,9 +104,7 @@ def setup_resources():
     signals.connect(node1, keystone_db)
     signals.connect(node1, keystone_db_user)
     signals.connect(node1, keystone_puppet)
-    signals.connect(mariadb_service1, keystone_db, {
-        'port': 'login_port',
-        'root_user': 'login_user',
+    signals.connect(mysql_puppet1, keystone_db, {
         'root_password': 'login_password',
         'ip' : 'db_host',
     })
@@ -180,7 +175,7 @@ def setup_resources():
         'sync_db': True,
     })[0]
     neutron_db = vr.create('neutron_db', 'resources/mariadb_db/', {
-        'db_name': 'neutron_db', 'login_user': 'root'})[0]
+        'db_name': 'neutron_db', 'login_user': 'root', 'login_port': 3306})[0]
     neutron_db_user = vr.create('neutron_db_user', 'resources/mariadb_user/', {
         'user_name': 'neutron', 'user_password': 'neutron', 'login_user': 'root'})[0]
     neutron_keystone_user = vr.create('neutron_keystone_user', 'resources/keystone_user', {
@@ -201,13 +196,10 @@ def setup_resources():
 
     signals.connect(node1, neutron_db)
     signals.connect(node1, neutron_db_user)
-    signals.connect(mariadb_service1, neutron_db, {
-        'port': 'login_port',
+    signals.connect(mysql_puppet1, neutron_db, {
         'root_password': 'login_password',
-        'root_user': 'login_user',
         'ip' : 'db_host'})
-    signals.connect(mariadb_service1, neutron_db_user, {'port': 'login_port', 'root_password': 'login_password'})
-    signals.connect(neutron_db, neutron_db_user, {'db_name', 'db_host'})
+    signals.connect(neutron_db, neutron_db_user, {'db_name', 'db_host', 'login_port', 'login_password'})
     signals.connect(neutron_db_user, neutron_server_puppet, {
         'user_name':'db_user',
         'db_name':'db_name',
@@ -300,7 +292,7 @@ def setup_resources():
     # CINDER
     cinder_puppet = vr.create('cinder_puppet', 'resources/cinder_puppet', {})[0]
     cinder_db = vr.create('cinder_db', 'resources/mariadb_db/', {
-        'db_name': 'cinder_db', 'login_user': 'root'})[0]
+        'db_name': 'cinder_db', 'login_user': 'root', 'login_port': 3306})[0]
     cinder_db_user = vr.create('cinder_db_user', 'resources/mariadb_user/', {
         'user_name': 'cinder', 'user_password': 'cinder', 'login_user': 'root'})[0]
     cinder_keystone_user = vr.create('cinder_keystone_user', 'resources/keystone_user', {
@@ -323,13 +315,10 @@ def setup_resources():
     signals.connect(admin_user, cinder_puppet, {'user_name': 'keystone_user', 'user_password': 'keystone_password', 'tenant_name': 'keystone_tenant'}) #?
     signals.connect(openstack_vhost, cinder_puppet, {'vhost_name': 'rabbit_virtual_host'})
     signals.connect(openstack_rabbitmq_user, cinder_puppet, {'user_name': 'rabbit_userid', 'password': 'rabbit_password'})
-    signals.connect(mariadb_service1, cinder_db, {
-        'port': 'login_port',
+    signals.connect(mysql_puppet1, cinder_db, {
         'root_password': 'login_password',
-        'root_user': 'login_user',
         'ip' : 'db_host'})
-    signals.connect(mariadb_service1, cinder_db_user, {'port': 'login_port', 'root_password': 'login_password'})
-    signals.connect(cinder_db, cinder_db_user, {'db_name', 'db_host'})
+    signals.connect(cinder_db, cinder_db_user, {'db_name', 'db_host', 'login_port', 'login_password'})
     signals.connect(cinder_db_user, cinder_puppet, {
         'user_name':'db_user',
         'db_name':'db_name',
@@ -339,7 +328,7 @@ def setup_resources():
     signals.connect(services_tenant, cinder_keystone_user)
     signals.connect(cinder_keystone_user, cinder_keystone_role)
     signals.connect(cinder_keystone_user, cinder_puppet, {'user_name': 'keystone_user', 'tenant_name': 'keystone_tenant', 'user_password': 'keystone_password'})
-    signals.connect(mariadb_service1, cinder_puppet, {'ip':'ip'})
+    signals.connect(mysql_puppet1, cinder_puppet, {'ip':'ip'})
     signals.connect(cinder_puppet, cinder_keystone_service_endpoint, {
         'ssh_key': 'ssh_key', 'ssh_user': 'ssh_user',
         'ip': ['ip', 'keystone_host', 'admin_ip', 'internal_ip', 'public_ip'],
@@ -375,7 +364,8 @@ def setup_resources():
     nova_puppet = vr.create('nova_puppet', 'resources/nova_puppet', {})[0]
     nova_db = vr.create('nova_db', 'resources/mariadb_db/', {
         'db_name': 'nova_db',
-        'login_user': 'root'})[0]
+        'login_user': 'root',
+        'login_port': 3306})[0]
     nova_db_user = vr.create('nova_db_user', 'resources/mariadb_user/', {
         'user_name': 'nova',
         'user_password': 'nova',
@@ -396,17 +386,12 @@ def setup_resources():
     signals.connect(node1, nova_puppet)
     signals.connect(node1, nova_db)
     signals.connect(node1, nova_db_user)
-    signals.connect(mariadb_service1, nova_db, {
-        'port': 'login_port',
+    signals.connect(mysql_puppet1, nova_db, {
         'root_password': 'login_password',
-        'root_user': 'login_user',
         'ip' : 'db_host'})
-    signals.connect(mariadb_service1, nova_db_user, {
-        'port': 'login_port',
-        'root_password': 'login_password'})
     signals.connect(admin_user, nova_puppet, {'user_name': 'keystone_user', 'user_password': 'keystone_password', 'tenant_name': 'keystone_tenant'}) #?
     signals.connect(openstack_vhost, nova_puppet, {'vhost_name': 'rabbit_virtual_host'})
-    signals.connect(nova_db, nova_db_user, {'db_name', 'db_host'})
+    signals.connect(nova_db, nova_db_user, {'db_name', 'db_host', 'login_port', 'login_password'})
     signals.connect(services_tenant, nova_keystone_user)
     signals.connect(nova_keystone_user, nova_keystone_role)
     signals.connect(keystone_puppet, nova_puppet, {
@@ -425,7 +410,7 @@ def setup_resources():
         'ip': 'keystone_host',
         'admin_port': 'keystone_admin_port',
         'admin_token': 'admin_token'})
-    signals.connect(mariadb_service1, nova_puppet, {
+    signals.connect(mysql_puppet1, nova_puppet, {
         'ip':'db_host'})
     signals.connect(nova_db_user, nova_puppet, {
         'user_name':'db_user',
@@ -501,7 +486,7 @@ def setup_resources():
     glance_db_user = vr.create('glance_db_user', 'resources/mariadb_user/', {
         'user_name': 'glance', 'user_password': 'glance', 'login_user': 'root'})[0]
     glance_db = vr.create('glance_db', 'resources/mariadb_db/', {
-        'db_name': 'glance', 'login_user': 'root'})[0]
+        'db_name': 'glance', 'login_user': 'root', 'login_port': 3306})[0]
     glance_keystone_user = vr.create('glance_keystone_user', 'resources/keystone_user', {
         'user_name': 'glance', 'user_password': 'glance123'})[0]
     glance_keystone_role = vr.create('glance_keystone_role', 'resources/keystone_role', {
@@ -521,13 +506,10 @@ def setup_resources():
     signals.connect(admin_user, glance_api_puppet, {
         'user_name': 'keystone_user', 'user_password': 'keystone_password',
         'tenant_name': 'keystone_tenant'}) #?
-    signals.connect(mariadb_service1, glance_db, {
-        'port': 'login_port',
+    signals.connect(mysql_puppet1, glance_db, {
         'root_password': 'login_password',
-        'root_user': 'login_user',
         'ip' : 'db_host'})
-    signals.connect(mariadb_service1, glance_db_user, {'port': 'login_port', 'root_password': 'login_password'})
-    signals.connect(glance_db, glance_db_user, {'db_name', 'db_host'})
+    signals.connect(glance_db, glance_db_user, {'db_name', 'db_host', 'login_port', 'login_password'})
     signals.connect(glance_db_user, glance_api_puppet, {
         'user_name':'db_user',
         'db_name':'db_name',
@@ -539,7 +521,7 @@ def setup_resources():
     signals.connect(glance_keystone_user, glance_api_puppet, {
         'user_name': 'keystone_user', 'tenant_name': 'keystone_tenant',
         'user_password': 'keystone_password'})
-    signals.connect(mariadb_service1, glance_api_puppet, {'ip':'ip'})
+    signals.connect(mysql_puppet1, glance_api_puppet, {'ip':'ip'})
     signals.connect(glance_api_puppet, glance_keystone_service_endpoint, {
         'ssh_key': 'ssh_key', 'ssh_user': 'ssh_user',
         'ip': ['ip', 'keystone_host', 'admin_ip', 'internal_ip', 'public_ip'],
@@ -594,7 +576,7 @@ resources_to_run = [
     'openstack_vhost',
     'openstack_rabbitmq_user',
 
-    'mariadb_service1',
+    'mysql_puppet1',
 
     'keystone_db',
     'keystone_db_user',
