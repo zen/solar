@@ -43,7 +43,9 @@ def setup_resources():
     node1, node2 = vr.create('nodes', 'templates/nodes.yml', {})
 
     # MySQL
-    mysql_puppet1 = vr.create('mysql_puppet1', 'resources/mysql_puppet', {})[0]
+    mysql_puppet1 = vr.create('mysql_puppet1', 'resources/mysql_puppet', {
+        'root_password': 'r00tme',
+    })[0]
     signals.connect(node1, mysql_puppet1)
 
     # RABBIT

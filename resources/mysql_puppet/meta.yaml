@@ -43,8 +43,8 @@ input:
       schema: str
       value: 'mysql'
     root_password:
-      schema: str
-      value: 'UNSET'
+      schema: str!
+      value:
     service_name:
       schema: str
       value: 'mysql'

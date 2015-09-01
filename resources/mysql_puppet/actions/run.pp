@@ -27,6 +27,24 @@ $databases                = $resource['input']['databases']['value']
 $client_bindings_enable  = $resource['input']['client_bindings_enable']['value']
 $client_package_name     = $resource['input']['client_package_name']['value']
 
+
+$override_options_alt = {
+  'mysqld' => {
+    'bind_address' => $ip,
+  },
+}
+$override_options_real = mysql_deepmerge($override_options, $override_options_alt)
+$grants_alt = {
+    "root@${ip}/*.*" => {
+        'ensure' => 'present',
+        'options' => ['GRANT'],
+        'privileges' => 'ALL PRIVILEGES',
+        'table' => '*.*',
+        'user' => "root@${ip}",
+    },
+}
+$grants_real = mysql_deepmerge($grants, $grants_alt)
+
 class {'mysql::server':
   package_manage           => true,
   service_manage           => true,
@@ -36,7 +54,7 @@ class {'mysql::server':
   install_options          => $install_options,
   install_secret_file      => $install_secret_file,
   manage_config_file       => $manage_config_file,
-  override_options         => $override_options,
+  override_options         => $override_options_real,
   package_ensure           => $package_ensure,
   package_name             => $package_name,
   purge_conf_dir           => $purge_conf_dir,
@@ -50,7 +68,7 @@ class {'mysql::server':
   create_root_user         => $create_root_user,
   create_root_my_cnf       => $create_root_my_cnf,
   users                    => $users,
-  grants                   => $grants,
+  grants                   => $grants_real,
   databases                => $databases,
 } ->
 
@@ -59,4 +77,11 @@ class {'mysql::client':
   package_ensure  => true,
   package_manage  => true,
   package_name    => $client_package_name,
+}
+
+# ensure 'identified by' the root password for new grants
+mysql_user { "root@${ip}":
+  ensure        => present,
+  password_hash => mysql_password($root_password),
+  require       => Mysql_grant["root@${ip}/*.*"],
 }
