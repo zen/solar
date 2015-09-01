@@ -47,7 +47,7 @@ input:
       value: 'UNSET'
     service_name:
       schema: str
-      value: 'mysqld'
+      value: 'mysql'
     service_provider:
       schema: str
       value: 'upstart'

@@ -27,10 +27,10 @@ $databases                = $resource['input']['databases']['value']
 $client_bindings_enable  = $resource['input']['client_bindings_enable']['value']
 $client_package_name     = $resource['input']['client_package_name']['value']
 
-class {'mysql':
-  server_package_manage    => true,
-  server_service_manage    => true,
-  server_service_enabled   => true,
+class {'mysql::server':
+  package_manage           => true,
+  service_manage           => true,
+  service_enabled          => true,
   config_file              => $config_file,
   includedir               => $includedir,
   install_options          => $install_options,
