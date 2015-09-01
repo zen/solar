@@ -1,0 +1,8 @@
+- hosts: [{{ ip }}]
+  sudo: yes
+  tasks:
+    - name: mysql container
+      docker:
+        name: {{ resource_name }}
+        image: {{ image }}
+        state: absent

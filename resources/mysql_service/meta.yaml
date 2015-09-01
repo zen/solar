@@ -1,0 +1,27 @@
+id: mysql_service
+handler: ansible
+version: 1.0.0
+input:
+    image:
+      schema: str!
+      value: mysql
+    root_user:
+      schema: str!
+      value: root
+    root_password:
+      schema: str!
+      value: mysql
+    port:
+      schema: int!
+      value: 3306
+    ip:
+      schema: str!
+      value:
+    ssh_key:
+      schema: str!
+      value:
+    ssh_user:
+      schema: str!
+      value:
+
+tags: [resource/mysql_service, resources/mysql]

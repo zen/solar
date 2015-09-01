@@ -1,0 +1,11 @@
+- hosts: [{{ ip }}]
+  sudo: yes
+  tasks:
+    - name: mysql user
+      mysql_user:
+        name: {{user_name}}
+        state: absent
+        login_user: root
+        login_password: {{login_password}}
+        login_port: {{login_port}}
+        login_host: {{db_host}}

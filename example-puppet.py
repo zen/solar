@@ -69,12 +69,12 @@ def setup_resources():
 
     # KEYSTONE
     keystone_puppet = vr.create('keystone_puppet', 'resources/keystone_puppet', {})[0]
-    keystone_db = vr.create('keystone_db', 'resources/mariadb_db/', {
+    keystone_db = vr.create('keystone_db', 'resources/mysql_db/', {
         'db_name': 'keystone_db',
         'login_user': 'root',
         'login_port': 3306
     })[0]
-    keystone_db_user = vr.create('keystone_db_user', 'resources/mariadb_user/', {
+    keystone_db_user = vr.create('keystone_db_user', 'resources/mysql_user/', {
         'user_name': 'keystone',
         'user_password': 'keystone',
     })[0]
@@ -174,9 +174,9 @@ def setup_resources():
     neutron_server_puppet = vr.create('neutron_server_puppet', 'resources/neutron_server_puppet', {
         'sync_db': True,
     })[0]
-    neutron_db = vr.create('neutron_db', 'resources/mariadb_db/', {
+    neutron_db = vr.create('neutron_db', 'resources/mysql_db/', {
         'db_name': 'neutron_db', 'login_user': 'root', 'login_port': 3306})[0]
-    neutron_db_user = vr.create('neutron_db_user', 'resources/mariadb_user/', {
+    neutron_db_user = vr.create('neutron_db_user', 'resources/mysql_user/', {
         'user_name': 'neutron', 'user_password': 'neutron', 'login_user': 'root'})[0]
     neutron_keystone_user = vr.create('neutron_keystone_user', 'resources/keystone_user', {
         'user_name': 'neutron',
@@ -291,9 +291,9 @@ def setup_resources():
 
     # CINDER
     cinder_puppet = vr.create('cinder_puppet', 'resources/cinder_puppet', {})[0]
-    cinder_db = vr.create('cinder_db', 'resources/mariadb_db/', {
+    cinder_db = vr.create('cinder_db', 'resources/mysql_db/', {
         'db_name': 'cinder_db', 'login_user': 'root', 'login_port': 3306})[0]
-    cinder_db_user = vr.create('cinder_db_user', 'resources/mariadb_user/', {
+    cinder_db_user = vr.create('cinder_db_user', 'resources/mysql_user/', {
         'user_name': 'cinder', 'user_password': 'cinder', 'login_user': 'root'})[0]
     cinder_keystone_user = vr.create('cinder_keystone_user', 'resources/keystone_user', {
         'user_name': 'cinder', 'user_password': 'cinder'})[0]
@@ -362,11 +362,11 @@ def setup_resources():
 
     # NOVA
     nova_puppet = vr.create('nova_puppet', 'resources/nova_puppet', {})[0]
-    nova_db = vr.create('nova_db', 'resources/mariadb_db/', {
+    nova_db = vr.create('nova_db', 'resources/mysql_db/', {
         'db_name': 'nova_db',
         'login_user': 'root',
         'login_port': 3306})[0]
-    nova_db_user = vr.create('nova_db_user', 'resources/mariadb_user/', {
+    nova_db_user = vr.create('nova_db_user', 'resources/mysql_user/', {
         'user_name': 'nova',
         'user_password': 'nova',
         'login_user': 'root'})[0]
@@ -483,9 +483,9 @@ def setup_resources():
 
     # GLANCE (base and API)
     glance_api_puppet = vr.create('glance_api_puppet', 'resources/glance_puppet', {})[0]
-    glance_db_user = vr.create('glance_db_user', 'resources/mariadb_user/', {
+    glance_db_user = vr.create('glance_db_user', 'resources/mysql_user/', {
         'user_name': 'glance', 'user_password': 'glance', 'login_user': 'root'})[0]
-    glance_db = vr.create('glance_db', 'resources/mariadb_db/', {
+    glance_db = vr.create('glance_db', 'resources/mysql_db/', {
         'db_name': 'glance', 'login_user': 'root', 'login_port': 3306})[0]
     glance_keystone_user = vr.create('glance_keystone_user', 'resources/keystone_user', {
         'user_name': 'glance', 'user_password': 'glance123'})[0]
