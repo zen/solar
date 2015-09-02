@@ -53,7 +53,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       when 'virtualbox'
         config.vm.network "private_network", ip: "#{ip}"
       when 'libvirt'
-        puts ip, index
         config.vm.network :private_network, ip: "#{ip}", :dev => "solbr#{index}", :mode => 'nat'
         index = index + 1
       else
