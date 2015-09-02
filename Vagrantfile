@@ -17,7 +17,11 @@ end
 
 SLAVES_COUNT = cfg["slaves_count"]
 SLAVES_RAM = cfg["slaves_ram"]
+SLAVES_CPU = cfg["slaves_cpu"]
+SLAVES_IPS = cfg["slaves_ips"]
 MASTER_RAM = cfg["master_ram"]
+MASTER_CPU = cfg["master_cpu"]
+MASTER_IPS = cfg["master_ips"]
 
 def ansible_playbook_command(filename, args=[])
   "ansible-playbook -v -i \"localhost,\" -c local /vagrant/bootstrap/playbooks/#{filename} #{args.join ' '}"
@@ -43,13 +47,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.provision "shell", inline: master_celery, privileged: true
     config.vm.provision "file", source: "~/.vagrant.d/insecure_private_key", destination: "/vagrant/tmp/keys/ssh_private"
     config.vm.provision "file", source: "ansible.cfg", destination: "/home/vagrant/.ansible.cfg"
-    config.vm.network "private_network", ip: "10.0.0.2"
+    MASTER_IPS.each do |ip|
+      config.vm.network "private_network", ip: "#{ip}"
+    end
     config.vm.host_name = "solar-dev"
 
     config.vm.provider :virtualbox do |v|
       v.customize [
         "modifyvm", :id,
         "--memory", MASTER_RAM,
+        "--cpus", MASTER_CPU,
         "--paravirtprovider", "kvm" # for linux guest
       ]
       v.name = "solar-dev"
@@ -66,13 +73,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       config.vm.provision "shell", inline: slave_script, privileged: true
       config.vm.provision "shell", inline: solar_script, privileged: true
       config.vm.provision "shell", inline: slave_celery, privileged: true
-      config.vm.network "private_network", ip: "10.0.0.#{ip_index}"
+      SLAVES_IPS.each do |ip|
+        config.vm.network "private_network", ip: "#{ip}#{ip_index}"
+      end
       config.vm.host_name = "solar-dev#{index}"
 
       config.vm.provider :virtualbox do |v|
         v.customize [
             "modifyvm", :id,
             "--memory", SLAVES_RAM,
+            "--cpus", SLAVES_CPU,
             "--paravirtprovider", "kvm" # for linux guest
         ]
         v.name = "solar-dev#{index}"
