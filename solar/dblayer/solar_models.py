@@ -20,6 +20,8 @@ from types import NoneType
 from uuid import uuid4
 
 from enum import Enum
+from solar.computable_inputs import ComputablePassedTypes
+from solar.computable_inputs.processor import get_processor
 from solar.dblayer.model import check_state_for
 from solar.dblayer.model import CompositeIndexField
 from solar.dblayer.model import DBLayerException
@@ -32,7 +34,8 @@ from solar.dblayer.model import SingleIndexCache
 from solar.dblayer.model import StrInt
 from solar.utils import solar_map
 
-InputTypes = Enum('InputTypes', 'simple list hash list_hash')
+
+InputTypes = Enum('InputTypes', 'simple list hash list_hash computable')
 
 
 class DBLayerSolarException(DBLayerException):
@@ -53,7 +56,11 @@ class InputsFieldWrp(IndexFieldWrp):
         # XXX: it could be worth to precalculate it
         if ':' in name:
             name = name.split(":", 1)[0]
-        schema = resource.meta_inputs[name].get('schema', None)
+        mi = resource.meta_inputs[name]
+        schema = mi.get('schema', None)
+        is_computable = mi.get('computable', None) is not None
+        if is_computable:
+            return InputTypes.computable
         if isinstance(schema, self._simple_types):
             return InputTypes.simple
         if isinstance(schema, list):
@@ -174,7 +181,13 @@ class InputsFieldWrp(IndexFieldWrp):
             if '|' in my_val:
                 my_val, my_tag = my_val.split('|', 1)
             else:
-                my_tag = other_resource.name
+                if real_my_type == InputTypes.hash:
+                    # when single dict then set shared hash for all resources
+                    # TODO: (jnowak) maybe we should remove tags completely
+                    # in this and only this case
+                    my_tag = '_single'
+                else:
+                    my_tag = other_resource.name
             my_inp_name = my_key
             other_ind_val = '{}|{}|{}|{}|{}|{}'.format(
                 other_resource.key, other_inp_name, my_resource.key,
@@ -210,6 +223,13 @@ class InputsFieldWrp(IndexFieldWrp):
             my_resource, my_inp_name, other_resource, other_inp_name, my_type,
             other_type)
 
+    def _connect_other_computable(self, my_resource, my_inp_name,
+                                  other_resource, other_inp_name, my_type,
+                                  other_type):
+        return self._connect_other_simple(
+            my_resource, my_inp_name, other_resource, other_inp_name, my_type,
+            other_type)
+
     def _connect_my_list(self, my_resource, my_inp_name, other_resource,
                          other_inp_name, my_type, other_type):
         ret = self._connect_my_simple(my_resource, my_inp_name, other_resource,
@@ -223,7 +243,12 @@ class InputsFieldWrp(IndexFieldWrp):
         if '|' in my_val:
             my_val, my_tag = my_val.split('|', 1)
         else:
-            my_tag = other_resource.name
+            # when single dict then set shared hash for all resources
+            # TODO: (jnowak) maybe we should remove tags completely there
+            if my_type == InputTypes.hash:
+                my_tag = '_single'
+            else:
+                my_tag = other_resource.name
         types_mapping = '|{}_{}'.format(my_type.value, other_type.value)
         my_ind_name = '{}_recv_bin'.format(self.fname)
         my_ind_val = '{}|{}|{}|{}|{}|{}'.format(my_resource.key, my_key,
@@ -238,6 +263,12 @@ class InputsFieldWrp(IndexFieldWrp):
                               other_inp_name, my_type, other_type):
         return self._connect_my_hash(my_resource, my_inp_name, other_resource,
                                      other_inp_name, my_type, other_type)
+
+    def _connect_my_computable(self, my_resource, my_inp_name, other_resource,
+                               other_inp_name, my_type, other_type):
+        return self._connect_my_simple(my_resource, my_inp_name,
+                                       other_resource, other_inp_name,
+                                       my_type, other_type)
 
     def connect(self, my_inp_name, other_resource, other_inp_name):
         my_resource = self._instance
@@ -453,17 +484,18 @@ class InputsFieldWrp(IndexFieldWrp):
                     emitter_inp, other)
             elif splen == 7:
                 # partial
-                (_, _, emitter_key, emitter_inp,
-                 my_tag, my_val, mapping_type) = splitted
-                cres = Resource.get(emitter_key).inputs._get_field_val(
-                    emitter_inp, other)
-                res = {my_val: cres}
+                res = {}
                 my_resource = self._instance
                 my_resource_value = my_resource.inputs._get_raw_field_val(
                     input_name)
                 if my_resource_value:
                     for my_val, cres in my_resource_value.iteritems():
                         res[my_val] = cres
+                (_, _, emitter_key, emitter_inp,
+                 my_tag, my_val, mapping_type) = splitted
+                cres = Resource.get(emitter_key).inputs._get_field_val(
+                    emitter_inp, other)
+                res[my_val] = cres
             else:
                 raise Exception("Not supported splen %s", splen)
         else:
@@ -513,6 +545,27 @@ class InputsFieldWrp(IndexFieldWrp):
         res = tmp_res.values()
         self._cache[name] = res
         return res
+
+    def _map_field_val_computable(self, recvs, input_name, name, other=None):
+        to_calc = []
+        computable = self._instance.meta_inputs[input_name]['computable']
+        computable_type = computable.get('type',
+                                         ComputablePassedTypes.values.name)
+        for recv in recvs:
+            index_val, obj_key = recv
+            splitted = index_val.split('|', 4)
+            _, inp, emitter_key, emitter_inp, _ = splitted
+            res = Resource.get(emitter_key)
+            inp_value = res.inputs._get_field_val(emitter_inp,
+                                                  other)
+            if computable_type == ComputablePassedTypes.values.name:
+                to_calc.append(inp_value)
+            else:
+                to_calc.append({'value': inp_value,
+                                'resource': res.name,
+                                'other_input': emitter_inp})
+        return get_processor(self._instance, input_name,
+                             computable_type, to_calc, other)
 
     def _get_raw_field_val(self, name):
         return self._instance._data_container[self.fname][name]
@@ -735,7 +788,9 @@ class Resource(Model):
         if mapping is None:
             return
         if self == other:
-            raise Exception('Trying to connect value-.* to itself')
+            for k, v in mapping.items():
+                if k == v:
+                    raise Exception('Trying to connect value-.* to itself')
         solar_map(
             lambda (my_name, other_name): self._connect_single(other_inputs,
                                                                other_name,

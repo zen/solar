@@ -12,25 +12,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""
-Starts single seession, and ends it with `atexit`
-can be used from cli / examples
-shouldn't be used from long running processes (workers etc)
+from enum import Enum
+import os
 
-"""
+ComputablePassedTypes = Enum('ComputablePassedTypes', 'values full')
+
+HELPERS_PATH = os.path.normpath(
+    os.path.join(os.path.realpath(__file__), '..', 'helpers'))
 
 
-def create_all():
+class ComputableInputProcessor(object):
 
-    import sys
-    if sys.executable.startswith(('python', )):
-        # auto add session to only standalone python runs
-        return
+    def __init__(self):
+        pass
 
-    from solar.dblayer.model import ModelMeta
-
-    import atexit
-
-    ModelMeta.session_start()
-
-    atexit.register(ModelMeta.session_end)
+    def process(self, resource_name, computable_type, funct, data):
+        if funct is None or funct == 'noop':
+            return data
+        return self.run(resource_name, computable_type, funct, data)
